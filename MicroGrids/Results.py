@@ -77,11 +77,11 @@ def Load_results1(instance):
     Scenarios_Ren =[[] for i in range(Number_Renewable_Source)]
     Renewable_Energy_2={}
     
-    idiot=[]
+    dum=[]
     for s in range(0, Number_Scenarios):
         for r in range(0,Number_Renewable_Source):
             for t in range(0, Number_Periods):
-                idiot.append((s+1,r+1,t+1))
+                dum.append((s+1,r+1,t+1))
     
     for s in range(0,Number_Scenarios):
         for t in range(0, Number_Periods):
@@ -89,7 +89,7 @@ def Load_results1(instance):
     for r in range(0,Number_Renewable_Source ):
         for t in range(0, Number_Periods):
             Scenarios_Ren[r].append((r+1,t+1))
-    for i in idiot:
+    for i in dum:
         Renewable_Energy_2.update({i:Renewable_Energy_1[i]}) 
             
     foo=0     
@@ -115,6 +115,7 @@ def Load_results1(instance):
                 for r in range(0,Number_Renewable_Source):
                     Information_2[r].append(Renewable_Energy_2[(foo+1,r+1,t+1)]) 
         Scenarios=Scenarios.append(Information_2)
+        
         foo+=1
         
     index=[]  
@@ -133,8 +134,6 @@ def Load_results1(instance):
     Scenarios.index= index
      
     
-   
-   
      # Creation of an index starting in the 'model.StartDate' value with a frequency step equal to 'model.Delta_Time'
     if instance.Delta_Time() >= 1 and type(instance.Delta_Time()) == type(1.0) : # if the step is in hours and minutes
         foo = str(instance.Delta_Time()) # trasform the number into a string
