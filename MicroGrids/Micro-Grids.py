@@ -14,7 +14,7 @@ from Economical_Analysis import Levelized_Cost_Of_Energy
 
 
 # Type of problem formulation:
-formulation = 'Integer'
+formulation = 'LP'
 
 # Renewable energy penetrarion
 
@@ -72,9 +72,9 @@ elif formulation =='Dispatch':
 
      
 # Energy Plot    
-S = 3 # Plot scenario
-Plot_Date = '25/12/2017 00:00:00' # Day-Month-Year
-PlotTime = 3# Days of the plot
+S = 1 # Plot scenario
+Plot_Date = '06/01/2017 00:00:00' # Day-Month-Year ####ACTUALLY IT WILL INTERPRET A DATE PREFERABLY AS MONTH-DAY; IF DEVOID OF MEANING, IT WILL TRY DAY-MONTH
+PlotTime = 1# Days of the plot
 Time_Series = Integer_Time_Series(instance,Scenarios, S) 
    
 plot = 'No Average' # 'No Average' or 'Average'
