@@ -842,7 +842,7 @@ def Integer_Time_Series(instance,Scenarios, S):  #S is the scenario that we want
     Time_Series['Energy_Demand'] = Scenarios['Energy_Demand '+str(S)]
     Time_Series['State_Of_Charge_Battery'] = Scenarios['SOC '+str(S)] 
     Time_Series['Energy Diesel'] = Scenarios['Gen energy '+str(S)]
-    
+
     return Time_Series
 
 def integer_Renewable_Energy(instance, Scenarios):
@@ -1353,6 +1353,7 @@ def Plot_Energy_Total(instance, Time_Series, plot, Plot_Date, PlotTime):
                     else:
                         Fill.loc[t,c] = Plot_Data[b][t]
                         Fill.loc[t,c2] = Plot_Data['Energy_Demand'][t]
+
 #        for t in Plot_Data.index:
 #            if Plot_Data[r][t] > Plot_Data['Energy_Demand'][t]:
 #                Fill.loc[t,c2] =  Fill.loc[t,r]
@@ -1454,56 +1455,84 @@ def Plot_Energy_Total(instance, Time_Series, plot, Plot_Date, PlotTime):
         start = Time_Series.index[0]
         end = Time_Series.index[instance.Periods()-1]
         Time_Series = Time_Series.astype('float64')
-        Plot_Data_2 = Time_Series[start:end].groupby([Time_Series[start:end].index.hour]).mean()
+        Plot_Data_2 = Time_Series[start:end].groupby([Time_Series[start:end].index.hour]).mean() # Creates a "typical" day by averaging over the time steps
         Plot_Data_2 = Plot_Data_2/1000
         Plot_Data_2['Charge energy to the Battery'] = -Plot_Data_2['Charge energy to the Battery']
         Plot_Data = Plot_Data_2
-        Vec = Plot_Data['Renewable Energy'] + Plot_Data['Energy Diesel']
-        Vec2 = (Plot_Data['Renewable Energy'] + Plot_Data['Energy Diesel'] + 
-                Plot_Data['Discharge energy from the Battery'])
         
+        Vec = pd.DataFrame()
+        Vec.loc[:,'Ren 1'] = Plot_Data['Renewable Energy 1'] + Plot_Data['Energy Diesel']
         
-        ax1= Vec.plot(style='b-', linewidth=0.5) # Plot the line of the diesel energy plus the PV energy
-        ax1.fill_between(Plot_Data.index, Plot_Data['Energy Diesel'].values, Vec.values,   
-                         alpha=0.3, color = 'b')
-        ax2= Plot_Data['Energy Diesel'].plot(style='r', linewidth=0.5)
+        if Number_Renewable_Source > 1:
+            dummy = Vec  
+            for r in range(2,Number_Renewable_Source+1):
+                dummy.loc[:,'Ren '+str(r)] = Plot_Data['Renewable Energy '+str(r)]
+                Vec.loc[:,'Ren '+str(r)] = pd.Series.to_frame(dummy.sum(1))[0]                 
+        
+        Vec.loc[:,'Tot'] = Plot_Data['Total Renewable Energy'] + Plot_Data['Energy Diesel']
+        
+        # Renewable energy plot (first renewable outside for loop, if >1 renewables the others are plotted in the loop)
+        color_list = ['yellow',(255/255,141/255,14/255),'c','0.6','y']
+        Alpha_r = 0.4
+        ax0 = Vec['Ren 1'].plot(style='y-', linewidth=0)
+        ax0.fill_between(Plot_Data.index, Plot_Data['Energy Diesel'].values, Vec['Ren 1'].values,   
+                             alpha=Alpha_r, color = color_list[0])
+        
+        if Number_Renewable_Source > 1:
+            for r in range(2,Number_Renewable_Source+1):
+                c_ren = color_list[r-1]   
+                ax1 = Vec['Ren ' +str(r)].plot(style='y-', linewidth=0)
+                ax1.fill_between(Plot_Data.index, Vec['Ren ' +str(r-1)], Vec['Ren ' +str(r)].values,   
+                                 alpha=Alpha_r, color = c_ren)
+
+        ax2= Plot_Data['Energy Diesel'].plot(style='m', linewidth=0.5)
         ax2.fill_between(Plot_Data.index, 0, Plot_Data['Energy Diesel'].values, 
-                         alpha=0.2, color='r') # Fill the area of the energy produce by the diesel generator
+                         alpha=0.2, color='m') # Fill the area of the energy produced by the diesel generator
+        
         ax3 = Plot_Data['Energy_Demand'].plot(style='k', linewidth=2)
-        ax3.fill_between(Plot_Data.index, Vec.values , 
+        ax3.fill_between(Plot_Data.index, Vec['Tot'].values , 
                          Plot_Data['Energy_Demand'].values,
                          alpha=0.3, color='g', 
-                         where= Plot_Data['Energy_Demand']>= Vec,interpolate=True)
-        ax5= Plot_Data['Charge energy to the Battery'].plot(style='m', linewidth=0.5) # Plot the line of the energy flowing into the battery
+                         where= Plot_Data['Energy_Demand']>= Vec['Tot'],interpolate=True)
+        
+        ax5= Plot_Data['Charge energy to the Battery'].plot(style='g', linewidth=0.5) # Plot the line of the energy flowing into the battery
         ax5.fill_between(Plot_Data.index, 0, 
                          Plot_Data['Charge energy to the Battery'].values
-                         , alpha=0.3, color='m') # Fill the area of the energy flowing into the battery
+                         , alpha=0.3, color='g') # Fill the area of the energy flowing into the battery
+
         ax6= Plot_Data['State_Of_Charge_Battery'].plot(style='k--', secondary_y=True, linewidth=2, alpha=0.7 ) # Plot the line of the State of charge of the battery
         
         # Define name  and units of the axis
-    
-
-
-
-
-        # Define name  and units of the axis
-        ax1.set_ylabel('Power (kW)')
-        ax1.set_xlabel('hours')
+        ax0.set_ylabel('Power (kW)')
+        ax0.set_xlabel('hours')
         ax6.set_ylabel('Battery State of charge (kWh)')
                 
         # Define the legends of the plot
-        From_PV = mpatches.Patch(color='blue',alpha=0.3, label='From Renewables')
-        From_Generator = mpatches.Patch(color='red',alpha=0.3, label='From Generator')
-        From_Battery = mpatches.Patch(color='green',alpha=0.5, label='From Battery')
-        To_Battery = mpatches.Patch(color='magenta',alpha=0.5, label='To Battery')
-        Lost_Load = mpatches.Patch(color='yellow', alpha= 0.3, label= 'Lost Load')
+        From_Generator = mpatches.Patch(color='m',alpha=0.3, label='From Generator')
+
+        Battery_Flow = mpatches.Patch(color='g',alpha=0.5, label='Battery Energy Flow')
+        
+        Lost_Load = mpatches.Patch(color='grey', alpha= 0.3, label= 'Lost Load')
+        
         Energy_Demand = mlines.Line2D([], [], color='black',label='Energy_Demand')
+        
         State_Of_Charge_Battery = mlines.Line2D([], [], color='black',
                                                 label='State_Of_Charge_Battery',
                                                 linestyle='--',alpha=0.7)
-        plt.legend(handles=[From_Generator, From_PV, From_Battery, 
-                            To_Battery, Lost_Load, Energy_Demand, 
+
+        plt.legend(handles=[From_Generator, Battery_Flow, Lost_Load, Energy_Demand, 
                             State_Of_Charge_Battery], bbox_to_anchor=(1.83, 1))
+
+        From_Renewables = []
+        for r in range(1,Number_Renewable_Source+1):
+            c_ren = color_list[r-1]
+            From_Renewables.append(mpatches.Patch(color=c_ren,alpha=Alpha_r, label='From Renewable '+str(r)))
+
+        from matplotlib.legend import Legend
+        leg = Legend(ax0, From_Renewables[:], ['From Renewable '+str(i+1) for i in range(Number_Renewable_Source)],
+             bbox_to_anchor=(1.73, 0.6), frameon=True)
+        ax0.add_artist(leg);
+
         plt.savefig('Results/Energy_Dispatch.png', bbox_inches='tight')    
         plt.show()    
     

@@ -34,24 +34,28 @@ param: Battery_Initial_SOC := 1;
 
 param: Scenarios := 1; ####
 
-param: Renewable_Source := 1;
+param: Renewable_Source := 2;
 
 param: Renewable_Nominal_Capacity :=
 
-1	250;
+1	250
+2	250;
 
 param: Renewable_Inverter_Efficiency := 
-1	1;
+
+1	1
+2	1;
 
 
 param: Renewable_Invesment_Cost :=# 4
 
-
-1	1.5;
+1	1.5
+2	1.5;
 
 param: Maintenance_Operation_Cost_Renewable := 
 
-1	0.015;
+1	0.015
+2	0.015;
 
 
 param: Generator_Type := 1;

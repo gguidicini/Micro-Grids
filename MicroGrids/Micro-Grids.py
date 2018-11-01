@@ -18,8 +18,8 @@ formulation = 'LP'
 
 # Renewable energy penetrarion
 
-Renewable_Penetration = 0 # a number from 0 to 1.
-Battery_Independency = 0  # number of days of battery independency
+Renewable_Penetration = 0.6 # a number from 0 to 1.
+Battery_Independency = 1  # number of days of battery independency
 
 model = AbstractModel() # define type of optimization problem
 
@@ -73,11 +73,11 @@ elif formulation =='Dispatch':
      
 # Energy Plot    
 S = 1 # Plot scenario
-Plot_Date = '06/01/2017 00:00:00' # Day-Month-Year ####ACTUALLY IT WILL INTERPRET A DATE PREFERABLY AS MONTH-DAY; IF DEVOID OF MEANING, IT WILL TRY DAY-MONTH
+Plot_Date = '21/03/2017 00:00:00' # Day-Month-Year ####ACTUALLY IT WILL INTERPRET A DATE PREFERABLY AS MONTH-DAY; IF DEVOID OF MEANING, IT WILL TRY DAY-MONTH
 PlotTime = 1# Days of the plot
 Time_Series = Integer_Time_Series(instance,Scenarios, S) 
    
-plot = 'No Average' # 'No Average' or 'Average'
+plot = 'Average' # 'No Average' or 'Average'
 Plot_Energy_Total(instance, Time_Series, plot, Plot_Date, PlotTime)
 
 
