@@ -60,7 +60,7 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
         model.Battery_Independency = Battery_Independency
         model.Battery_Min_Capacity = Param(initialize=Min_Bat_Capacity)
   
-    # Parametes of the diesel generator
+    # Parameters of the diesel generator
     model.Generator_Efficiency = Param(model.generator_type) # Generator efficiency to trasform heat into electricity %
     model.Low_Heating_Value = Param(model.generator_type) # Low heating value of the diesel in W/L
     model.Fuel_Cost = Param(model.generator_type,
@@ -71,7 +71,7 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
                                             initialize=Marginal_Cost_Generator_1)
         
     # Parameters of the Energy balance                  
-    model.Energy_Demand = Param(model.scenario, model.periods, 
+    model.Energy_Demand = Param(model.scenario, model.years, model.periods, 
                                 initialize=Initialize_Demand) # Energy Energy_Demand in W 
     model.Lost_Load_Probability = Param(within=NonNegativeReals) # Lost load probability in %
     model.Value_Of_Lost_Load = Param(within=NonNegativeReals) # Value of lost load in USD/W
@@ -102,11 +102,11 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
 
     # Variables associated to the battery bank
     model.Battery_Nominal_Capacity = Var(within=NonNegativeReals) # Capacity of the battery bank in Wh
-    model.Energy_Battery_Flow_Out = Var(model.scenario, model.periods,
+    model.Energy_Battery_Flow_Out = Var(model.scenario, model.years, model.periods,
                                         within=NonNegativeReals) # Battery discharge energy in wh
-    model.Energy_Battery_Flow_In = Var(model.scenario, model.periods, 
+    model.Energy_Battery_Flow_In = Var(model.scenario, model.years, model.periods, 
                                        within=NonNegativeReals) # Battery charge energy in wh
-    model.State_Of_Charge_Battery = Var(model.scenario, model.periods, 
+    model.State_Of_Charge_Battery = Var(model.scenario, model.years, model.periods, 
                                         within=NonNegativeReals) # State of Charge of the Battery in wh
     model.Maximun_Charge_Power = Var(within=NonNegativeReals)
     model.Maximun_Discharge_Power = Var(within=NonNegativeReals)
@@ -114,7 +114,7 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
     model.Generator_Nominal_Capacity = Var(model.generator_type,
                                            within=NonNegativeReals) # Capacity  of the diesel generator in Wh
 
-    model.Generator_Energy = Var(model.scenario,model.generator_type,
+    model.Generator_Energy = Var(model.scenario, model.years, model.generator_type,
                                  model.periods, within=NonNegativeReals) # Energy generated for the Diesel generator
     model.Fuel_Cost_Total = Var(model.scenario, model.generator_type,
                                   within=NonNegativeReals)
@@ -122,8 +122,8 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
     
     
     # Varialbles associated to the energy balance
-    model.Lost_Load = Var(model.scenario, model.periods, within=NonNegativeReals) # Energy not suply by the system kWh
-    model.Energy_Curtailment = Var(model.scenario, model.periods, within=NonNegativeReals) # Curtailment of solar energy in kWh
+    model.Lost_Load = Var(model.scenario, model.years, model.periods, within=NonNegativeReals) # Energy not suply by the system kWh
+    model.Energy_Curtailment = Var(model.scenario, model.years, model.periods, within=NonNegativeReals) # Curtailment of solar energy in kWh
     model.Scenario_Lost_Load_Cost = Var(model.scenario, within=NonNegativeReals) ####    
 
     # Variables associated to the project

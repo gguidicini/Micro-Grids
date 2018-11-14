@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #billy rioja
+
 import pandas as pd
 from pyomo.environ import  AbstractModel
 
@@ -10,13 +11,11 @@ Integer_Time_Series, integer_Renewable_Energy, Integer_Data_Renewable, Integer_G
 Integer_Generator_Data, Integer_Results, Economic_Analysis
 from Model_Creation import Model_Creation, Model_Creation_binary, Model_Creation_Integer, Model_Creation_Dispatch
 from Model_Resolution import Model_Resolution, Model_Resolution_binary, Model_Resolution_Integer, Model_Resolution_Dispatch
-from Economical_Analysis import Levelized_Cost_Of_Energy
+#from Economical_Analysis import Levelized_Cost_Of_Energy
 
 
 # Type of problem formulation:
 formulation = 'LP'
-
-# Renewable energy penetrarion
 
 Renewable_Penetration = 0.6 # a number from 0 to 1.
 Battery_Independency = 1  # number of days of battery independency
@@ -33,12 +32,12 @@ if formulation == 'LP':
 
     ## Upload the resulst from the instance and saving it in excel files
     Data = Load_results1(instance) # Extract the results of energy from the instance and save it in a excel file 
-    Scenarios =  Data[3]
-    Scenario_Probability = Data[5].loc['Scenario Weight'] 
-    Generator_Data = Data[4]
-    Data_Renewable = Data[7]
-    Results = Data[2]
-    LCOE = Data[6]
+    Scenarios =  Data[2]
+    Scenario_Probability = Data[4].loc['Scenario Weight'] 
+    Generator_Data = Data[3]
+    Data_Renewable = Data[6]
+    Results = Data[1]
+    LCOE = Data[5]
     
 
 elif formulation == 'Binary':

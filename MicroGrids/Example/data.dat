@@ -1,12 +1,12 @@
 param: Periods := 8760;
 
-param: Years := 20;
+param: Years := 2;
 
 param: StartDate := '21/03/2017 00:00:00';
 
 param: Delta_Time := 1.0;
 
-param: Battery_Invesment_Cost := 0.55; # 1
+param: Battery_Invesment_Cost := 0.7; # 1
 
 param: Battery_Electronic_Invesmente_Cost := 0.55;
 
@@ -32,7 +32,7 @@ param: Battery_Cycles := 5500; # 3
 
 param: Battery_Initial_SOC := 1;
 
-param: Scenarios := 1; ####
+param: Scenarios := 2; ####
 
 param: Renewable_Source := 2;
 
@@ -80,5 +80,6 @@ param: Low_Heating_Value :=
 
 param: Scenario_Weight :=
 
-1	1;
+1	0.6
+2	0.4;
 

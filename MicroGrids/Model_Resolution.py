@@ -26,31 +26,35 @@ def Model_Resolution(model,Renewable_Penetration, Battery_Independency,datapath=
     
     # CONSTRAINTS
     #Energy constraints
-    model.EnergyBalance = Constraint(model.scenario,model.periods, rule=Energy_balance)
-    model.MaximunLostLoad = Constraint(model.scenario, rule=Maximun_Lost_Load) # Maximum permissible lost load
+    model.EnergyBalance = Constraint(model.scenario, model.years, model.periods, rule=Energy_balance)
+    model.MaximunLostLoad = Constraint(model.scenario, model.years, rule=Maximun_Lost_Load) # Maximum permissible lost load
     model.ScenarioLostLoadCost = Constraint(model.scenario, rule=Scenario_Lost_Load_Cost)
     if Renewable_Penetration > 0:
         model.RenewableEnergyPenetration = Constraint(rule=Renewable_Energy_Penetration)
     # PV constraints
     model.RenewableEnergy = Constraint(model.scenario, model.renewable_source,
                                        model.periods, rule=Renewable_Energy)  # Energy output of the solar panels
+    
+    
     # Battery constraints
-    model.StateOfCharge = Constraint(model.scenario, model.periods, rule=State_of_Charge) # State of Charge of the battery
-    model.MaximunCharge = Constraint(model.scenario, model.periods, rule=Maximun_Charge) # Maximun state of charge of the Battery
-    model.MinimunCharge = Constraint(model.scenario, model.periods, rule=Minimun_Charge) # Minimun state of charge
+    model.StateOfCharge = Constraint(model.scenario, model.years, model.periods, rule=State_of_Charge) # State of Charge of the battery
+    model.MaximunCharge = Constraint(model.scenario, model.years, model.periods, rule=Maximun_Charge) # Maximun state of charge of the Battery
+    model.MinimunCharge = Constraint(model.scenario, model.years, model.periods, rule=Minimun_Charge) # Minimun state of charge
     model.MaxPowerBatteryCharge = Constraint(rule=Max_Power_Battery_Charge)  # Max power battery charge constraint
     model.MaxPowerBatteryDischarge = Constraint(rule=Max_Power_Battery_Discharge)    # Max power battery discharge constraint
-    model.MaxBatIn = Constraint(model.scenario, model.periods, rule=Max_Bat_in) # Minimun flow of energy for the charge fase
-    model.Maxbatout = Constraint(model.scenario, model.periods, rule=Max_Bat_out) #minimun flow of energy for the discharge fase
+    model.MaxBatIn = Constraint(model.scenario, model.years, model.periods, rule=Max_Bat_in) # Minimun flow of energy for the charge fase
+    model.Maxbatout = Constraint(model.scenario, model.years, model.periods, rule=Max_Bat_out) #minimun flow of energy for the discharge fase
     if Battery_Independency > 0:
         model.BatteryMinCapacity = Constraint(rule=Battery_Min_Capacity)
-
+    
+    
     # Diesel Generator constraints
-    model.MaximunFuelEnergy = Constraint(model.scenario, model.generator_type,
+    model.MaximunFuelEnergy = Constraint(model.scenario, model.years, model.generator_type,
                                          model.periods, rule=Maximun_Generator_Energy) # Maximun energy output of the diesel generator
 
     model.FuelCostTotal = Constraint(model.scenario, model.generator_type,
                                      rule=Fuel_Cost_Total)
+    
     
     # Financial Constraints
     model.ScenarioNetPresentCost = Constraint(model.scenario, rule=Scenario_Net_Present_Cost)    
@@ -58,10 +62,16 @@ def Model_Resolution(model,Renewable_Penetration, Battery_Independency,datapath=
     model.OperationMaintenanceCost = Constraint(rule=Operation_Maintenance_Cost)
     model.BatteryRepositionCost = Constraint(model.scenario,rule=Battery_Reposition_Cost) 
 
+    print('Model_Resolution: Constraints imported')
     
-    instance = model.create_instance(datapath) # load parameters       
+    instance = model.create_instance(datapath) # load parameters
+
+    print('Model_Resolution: Instance created')
+    
     opt = SolverFactory('cplex') # Solver use during the optimization    
+        
     results = opt.solve(instance, tee=True) # Solving a model instance 
+    
     instance.solutions.load_from(results)  # Loading solution into instance
     return instance
     
