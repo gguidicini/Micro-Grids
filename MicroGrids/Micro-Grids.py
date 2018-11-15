@@ -37,11 +37,7 @@ if formulation == 'LP':
     Data_Renewable = Data[6]
     Results = Data[1]
     LCOE = Data[5]
-<<<<<<< HEAD
     Scenario_Cost = Data[7]
-=======
-    
->>>>>>> ed31ae9a58c1245e3b9e1040121ea73e285c0bca
 
 elif formulation == 'Binary':
     Model_Creation_binary(model) # Creation of the Sets, parameters and variables.

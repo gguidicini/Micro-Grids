@@ -32,7 +32,7 @@ param: Battery_Cycles := 5500; # 3
 
 param: Battery_Initial_SOC := 1;
 
-param: Scenarios := 2; ####
+param: Scenarios := 1; ####
 
 param: Renewable_Source := 2;
 
@@ -80,6 +80,5 @@ param: Low_Heating_Value :=
 
 param: Scenario_Weight :=
 
-1	0.6
-2	0.4;
+1	1;
 

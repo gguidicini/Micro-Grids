@@ -31,17 +31,9 @@ period = [i for i in range(1,n_periods+1)]
 # This section imports the multi-year Demand and creates a Multi-indexed pd.DataFrame for it
 Demand = pd.read_excel('Example/Demand.xls')
 
-<<<<<<< HEAD
 Energy_Demand_Series = pd.Series()
 
 for i in range(1,n_years*n_scenarios+1):
-=======
-rows = Demand.shape[0]
-columns = Demand.shape[1]
-Energy_Demand_Series = pd.Series()
-
-for i in range(1,columns+1):
->>>>>>> ed31ae9a58c1245e3b9e1040121ea73e285c0bca
     dum = Demand[i][:]
     Energy_Demand_Series = pd.concat([Energy_Demand_Series,dum])
 

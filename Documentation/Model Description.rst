@@ -61,7 +61,7 @@ Diesel generator parameters
 Name	                          Unit      Description                       
 ===============================   ========  ======================================================================
 GeneratorEfficiency               %         Generator efficiency to transform heat into electricity
-LowHeatingValue                   W/L       Low heating value of the diesel
+LowHeatingValue                   Wh/L       Low heating value of the diesel
 DieselCost			  USD/L     Diesel cost
 GeneratorInvesmentCost            USD/W     Investment cost to install a diesel generator
 ===============================   ========  ======================================================================
