@@ -32,8 +32,8 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
 
     # PARAMETERS
     model.Scenario_Weight = Param(model.scenario, within=NonNegativeReals) #########
-    # Parameters of the PV 
-   
+    
+    # Parameters of RES   
 
     model.Renewable_Nominal_Capacity = Param(model.renewable_source,
                                              within=NonNegativeReals) # Nominal capacity of the PV in W/unit
@@ -43,6 +43,8 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
     model.Renewable_Energy_Production = Param(model.scenario,model.renewable_source,
                                               model.periods, within=NonNegativeReals, 
                                               initialize=Initialize_Renewable_Energy) # Energy produccion of a solar panel in W
+
+    
     
     # Parameters of the battery bank
     model.Charge_Battery_Efficiency = Param() # Efficiency of the charge of the battery in  %

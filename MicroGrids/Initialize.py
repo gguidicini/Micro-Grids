@@ -143,6 +143,7 @@ def Initialize_Renewable_Energy(model,s,r,t):
     
     :return: The energy yield of one PV for the period t.
     '''
+    
     column = (s-1)*model.Renewable_Source + r 
     return float(Renewable_Energy[column][t])   
     
@@ -162,7 +163,6 @@ def Marginal_Cost_Generator_Dispatch(model):
 
 def Min_Bat_Capacity(model):
         
-    
     Periods = model.Battery_Independency*24
     Len = int(model.Periods*model.Years/Periods)
     Grouper = 1
