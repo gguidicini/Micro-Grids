@@ -18,9 +18,13 @@ def Load_results1(instance):
     :return: A dataframe called Time_series with the values of the variables that depend of the periods.    
     '''
     
+    INV = instance.Initial_Inversion.get_values()
+    
+    
     Number_Scenarios = int(instance.Scenarios.extract_values()[None])
     Number_Periods = int(instance.Periods.extract_values()[None])
     Number_Years = int(instance.Years.extract_values()[None])
+    Number_Upgrades = int(instance.Upgrades_Number.extract_values()[None])
     Number_Renewable_Source = int(instance.Renewable_Source.extract_values()[None])
     Number_Generator = int(instance.Generator_Type.extract_values()[None])
     LHV = (instance.Low_Heating_Value.extract_values())
@@ -37,6 +41,13 @@ def Load_results1(instance):
     Energy_Demand = instance.Energy_Demand.extract_values()
     SOC = instance.State_Of_Charge_Battery.get_values()
     Generator_Energy = instance.Generator_Energy.get_values()
+
+
+    RenewableUnits = instance.Renewable_Units.get_values()
+    GenCapacity = instance.Generator_Nominal_Capacity.get_values()
+    BattCapacity = instance.Battery_Nominal_Capacity.get_values()
+
+
     
     columns = []
     for i in range(1, Number_Scenarios+1):
@@ -48,7 +59,7 @@ def Load_results1(instance):
             for t in range(1, Number_Periods+1):                
                 foo = []
                 for r in range(1,Number_Renewable_Source+1):
-                    foo.append((s,r,t))           
+                    foo.append((s,y,r,t))           
                 Renewable_Energy[s,y,t] = sum(Renewable_Energy_1[i] for i in foo)
                     
     Total_Generator_Energy = {}
@@ -97,7 +108,7 @@ def Load_results1(instance):
             for y in range(0, Number_Years):
                 for t in range(0,Number_Periods):
                     for r in range(0,Number_Renewable_Source):
-                        Information_2[r].append(Renewable_Energy_1[(foo+1,r+1,t+1)]) 
+                        Information_2[r].append(Renewable_Energy_1[(foo+1,y+1,r+1,t+1)]) 
         Scenarios=Scenarios.append(Information_2)        
         foo+=1
     
@@ -195,17 +206,28 @@ def Load_results1(instance):
     Data_Renewable = pd.DataFrame()
     for r in range(1, Number_Renewable_Source + 1):
         Name = 'Source ' + str(r)
-        Data_Renewable.loc['Units', Name] = Renewable_Units[r]
-        Data_Renewable.loc['Nominal Capacity', Name] = Renewable_Nominal_Capacity[r]
+        Data_Renewable.loc['Unitary Nominal Capacity [W]', Name] = Renewable_Nominal_Capacity[r]
         Data_Renewable.loc['Inverter Efficiency', Name] = Inverter_Efficiency_Renewable[r]
-        Data_Renewable.loc['Investment Cost', Name] = Renewable_Invesment_Cost[r]
-        Data_Renewable.loc['O&M', Name] = OyM_Renewable[r]
-        Data_Renewable.loc['Investment', Name] = Renewable_Units[r]*Renewable_Nominal_Capacity[r]*Renewable_Invesment_Cost[r]        
-        Data_Renewable.loc['O&M Cost', Name] = Data_Renewable.loc['Investment', Name]*OyM_Renewable[r]        
-        Data_Renewable.loc['Total Nominal Capacity', Name] = Data_Renewable.loc['Nominal Capacity', Name]*Data_Renewable.loc['Units', Name]    
+        Data_Renewable.loc['Investment Cost [USD/W]', Name] = Renewable_Invesment_Cost[r]
+        Data_Renewable.loc['O&M Cost [%]', Name] = OyM_Renewable[r]
 
-    Data_Renewable.to_excel('Results/Source_Renewable_Data.xlsx')    
-    print('Results: Source_Renewable_Data.xlsx exported')
+        for u in range(1, Number_Upgrades +1):
+            Data_Renewable.loc['Units at upgrade ' +str(u), Name] = Renewable_Units[u,r]
+        
+        for u in range(1, Number_Upgrades +1):
+            Data_Renewable.loc['Total Nominal Capacity at upgrade ' +str(u), Name] = Data_Renewable.loc['Unitary Nominal Capacity [W]', Name]*Data_Renewable.loc['Units at upgrade ' +str(u), Name]            
+        
+        for u in range(1, Number_Upgrades +1):
+            if u == 1:
+                Data_Renewable.loc['Investment at upgrade '+ str(u), Name] = Renewable_Units[u,r]*Renewable_Nominal_Capacity[r]*Renewable_Invesment_Cost[r]        
+            else:
+                Data_Renewable.loc['Investment at upgrade '+ str(u), Name] = (Renewable_Units[u,r] - Renewable_Units[u-1,r])*Renewable_Nominal_Capacity[r]*Renewable_Invesment_Cost[r]
+
+        for u in range(1, Number_Upgrades +1):
+            Data_Renewable.loc['Yearly O&M Cost at upgrade ' +str(u), Name] = Renewable_Units[u,r]*Renewable_Nominal_Capacity[r]*Renewable_Invesment_Cost[r]*OyM_Renewable[r]
+
+    Data_Renewable.to_excel('Results/Renewable_Source_Data.xlsx')    
+    print('Results: Renewable_Source_Data.xlsx exported')
     
     
     Number_Generator = int(instance.Generator_Type.extract_values()[None])
@@ -215,190 +237,232 @@ def Load_results1(instance):
     Generator_Invesment_Cost = instance.Generator_Invesment_Cost.extract_values()
     Generator_Nominal_Capacity = instance.Generator_Nominal_Capacity.get_values()
     Maintenance_Operation_Cost_Generator = instance.Maintenance_Operation_Cost_Generator.extract_values()
+    Marginal_Cost_Gen = instance.Marginal_Cost_Generator_1.extract_values()
+    FCT = instance.Fuel_Cost_Total.get_values()
+    
     
     Generator_Data = pd.DataFrame()
     for g in range(1, Number_Generator + 1):
         Name = 'Generator ' + str(g)
-        Generator_Data.loc['Generator Efficiency',Name] = Generator_Efficiency[g]
-        Generator_Data.loc['Low Heating Value',Name] = Low_Heating_Value[g]
-        Generator_Data.loc['Fuel Cost',Name] = Fuel_Cost[g]
-        Generator_Data.loc['Generator Investment Cost',Name] = Generator_Invesment_Cost[g]
-        Generator_Data.loc['Generator Nominal Capacity',Name] = Generator_Nominal_Capacity[g]
-        Generator_Data.loc['O&M Generator', Name] = Maintenance_Operation_Cost_Generator[g]
-        Generator_Data.loc['Investment Generator', Name] = Generator_Invesment_Cost[g]*Generator_Nominal_Capacity[g]
-        Generator_Data.loc['O&M Cost', Name] = Generator_Data.loc['Investment Generator', Name]*Generator_Data.loc['O&M Generator', Name]
-        Generator_Data.loc['Marginal Cost', Name] = Generator_Data.loc['Fuel Cost',Name]/(Generator_Data.loc['Generator Efficiency',Name]*Generator_Data.loc['Low Heating Value',Name])
+        Generator_Data.loc['Efficiency',Name] = Generator_Efficiency[g]
+        Generator_Data.loc['Lower Heating Value [Wh/Lt]',Name] = Low_Heating_Value[g]
+        Generator_Data.loc['Fuel Cost [USD/Lt]',Name] = Fuel_Cost[g]
+        Generator_Data.loc['Investment Cost [USD/W]',Name] = Generator_Invesment_Cost[g]
+        Generator_Data.loc['O&M Cost [%]', Name] = Maintenance_Operation_Cost_Generator[g]
+        Generator_Data.loc['Marginal Cost [USD/Wh]', Name] = Marginal_Cost_Gen[g]
+        
+        for u in range(1, Number_Upgrades +1):
+            Generator_Data.loc['Nominal Capacity at upgrade '+str(u),Name] = Generator_Nominal_Capacity[u,g]
+                
+        for u in range(1, Number_Upgrades +1):
+            if u==1:
+                Generator_Data.loc['Investment at upgrade ' + str(u), Name] = Generator_Invesment_Cost[g]*Generator_Nominal_Capacity[u,g]
+            else:
+                Generator_Data.loc['Investment at upgrade ' + str(u), Name] = Generator_Invesment_Cost[g]*(Generator_Nominal_Capacity[u,g] - Generator_Nominal_Capacity[u-1,g])
+        
+        for u in range(1, Number_Upgrades +1):        
+            Generator_Data.loc['Yearly O&M Cost at upgrade ' + str(u), Name] = Generator_Invesment_Cost[g]*Generator_Nominal_Capacity[u,g]*Generator_Data.loc['O&M Cost [%]', Name]
+        
+        Fuel_Cost_Tot = [[] for s in range(Number_Scenarios)]
+        
+        for s in range(1, Number_Scenarios+1):
+            dum_2 = 0
+            for y in range(1, Number_Years +1):
+                dum = sum(Generator_Energy[s,y,g,t]*Marginal_Cost_Gen[g] for t in range(1, Number_Periods+1))
+                dum_2 += dum
+            Fuel_Cost_Tot[s-1] = dum_2
+                
+        Generator_Data.loc['Total Fuel Cost', Name] = sum(Fuel_Cost_Tot[s-1]*Scenario_Weight[s] for s in range(1, Number_Scenarios+1))
+        
     Generator_Data.to_excel('Results/Generator_Data.xlsx')      
     print('Results: Generator_Data.xlsx exported')    
     
     
-    cc = instance.Battery_Nominal_Capacity.get_values()
     NPC = instance.ObjectiveFuntion.expr()
-    DiscountRate = instance.Discount_Rate.value
+#    DiscountRate = instance.Discount_Rate.value
+#    Years = instance.Years.value
+#    Initial_Inversion = instance.Initial_Inversion.get_values()[None]
+#    O_M_Cost = instance.Operation_Maintenance_Cost.get_values()[None]
+#    VOLL = instance.Value_Of_Lost_Load.value
+
+
+    Battery_Nominal_Capacity = instance.Battery_Nominal_Capacity.get_values()
     PriceBattery= instance.Battery_Invesment_Cost.value
-    Years = instance.Years.value
-    Initial_Inversion = instance.Initial_Inversion.get_values()[None]
-    O_M_Cost = instance.Operation_Maintenance_Cost.get_values()[None]
-    Battery_Reposition_Cost = instance.Unitary_Battery_Reposition_Cost.value
-    VOLL = instance.Value_Of_Lost_Load.value
+    Unitary_Battery_Reposition_Cost = instance.Unitary_Battery_Reposition_Cost.value
     OM_Bat = instance.Maintenance_Operation_Cost_Battery.value
-    SOC_1 = instance.Battery_Initial_SOC.value
-    Ch_bat_eff = instance.Charge_Battery_Efficiency.value
-    Dis_bat_eff = instance.Discharge_Battery_Efficiency.value
-    Year = instance.Years.value
-    data3 = np.array([cc[None],NPC, DiscountRate, 
-                      PriceBattery, Years, Initial_Inversion,
-                      O_M_Cost, Battery_Reposition_Cost, VOLL,
-                       OM_Bat, SOC_1, Ch_bat_eff, Dis_bat_eff, Year]) # Loading the values to a numpy array
-    index_values = ['Battery Nominal Capacity','NPC','Discount Rate','Price Battery', 
-                    'Years','Initial Inversion', 'O&M', 
-                    'Battery Unitary Reposition Cost','VOLL', 'O&M Bat', 'Initial SOC',
-                    'Battery charge efficiency', 'Battery discharge efficiency',
-                    'Project Life Time']
-    # Create a data frame for the variable that don't depend of the periods of analisys 
-    Size_variables = pd.DataFrame(data3,index=index_values)
-    Size_variables.to_excel('Results/Size.xlsx') # Creating an excel file with the values of the variables that does not depend of the periods
-    print('Results: Size.xlsx exported')    
-
-   
+    BRC = instance.Battery_Reposition_Cost.get_values()
+    
     Battery_Data = pd.DataFrame()
-    Battery_Data.loc['Invesment','Battery'] = Size_variables[0]['Battery Nominal Capacity']*Size_variables[0]['Price Battery']
-    Battery_Data.loc['O&M','Battery'] = Battery_Data['Battery']['Invesment']*Size_variables[0]['O&M Bat']
+    Battery_Data.loc['Unitary Investment Cost [USD/Wh]',0] = PriceBattery
+    Battery_Data.loc['O&M Cost [%]',0] = OM_Bat
+    Battery_Data.loc['Unitary Battery Reposition Cost [USD/Wh]',0] = Unitary_Battery_Reposition_Cost
+    
+    for u in range(1, Number_Upgrades +1):
+        Battery_Data.loc['Nominal Capacity at upgrade '+str(u),0] = Battery_Nominal_Capacity[u]   
+    
+    for u in range(1, Number_Upgrades +1):
+        if u == 1:
+            Battery_Data.loc['Investment at upgrade '+str(u),0] = Battery_Nominal_Capacity[u]*PriceBattery
+        else:
+            Battery_Data.loc['Investment at upgrade '+str(u),0] = (Battery_Nominal_Capacity[u] - Battery_Nominal_Capacity[u-1])*PriceBattery
+
+    for u in range(1, Number_Upgrades +1):
+        Battery_Data.loc['Yearly O&M Cost at upgrade '+str(u),0] = Battery_Nominal_Capacity[u]*PriceBattery*OM_Bat
+
+    Battery_Data.to_excel('Results/Battery_Data.xlsx') # Creating an excel file with the values of the variables that does not depend of the periods
+    print('Results: Battery_Data.xlsx exported')    
+    
+    
+#    data3 = np.array([NPC, DiscountRate]), 
+#                      PriceBattery, Years, Initial_Inversion,
+#                      O_M_Cost, Battery_Reposition_Cost, VOLL,
+#                       OM_Bat, SOC_1, Ch_bat_eff, Dis_bat_eff, Year]) # Loading the values to a numpy array
+#   
+#    index_values = ['Battery Nominal Capacity','NPC','Discount Rate','Price Battery', 
+#                    'Years','Initial Inversion', 'O&M', 
+#                    'Battery Unitary Reposition Cost','VOLL', 'O&M Bat', 'Initial SOC',
+#                    'Battery charge efficiency', 'Battery discharge efficiency',
+#                    'Project Life Time']
+    # Create a data frame for the variable that don't depend of the periods of analisys 
+#    Size_variables = pd.DataFrame(data3,index=index_values)
+#    Size_variables.to_excel('Results/Size.xlsx') # Creating an excel file with the values of the variables that does not depend of the periods
+#    print('Results: Size.xlsx exported')    
 
 
-    Generator_Time_Series = pd.DataFrame()
-    df = pd.DataFrame()
-    for y in range(1, Number_Years + 1):
-        for s in range(1, Number_Scenarios + 1):
-            for g in range(1, Number_Generator + 1):
-                column_1 = 'Energy Generator: s=' + str(s) + ' g=' + str(g)
-                column_2 = 'Fuel Cost: s=' + str(s) + ' g=' + str(g)
-                Name = 'Generator ' + str(g)
 
-                for t in range(1, Number_Periods + 1):
-                    df.loc[t,column_1] = Generator_Energy[s,y,g,t]
-                    df.loc[t,column_2] = df.loc[t,column_1]*Generator_Data.loc['Marginal Cost', Name]
-        Generator_Time_Series = Generator_Time_Series.append(df) 
-            
-    Generator_Time_Series.index = Scenarios.index           
-    Generator_Time_Series.to_excel('Results/Generator_Time_Series.xlsx') 
-    print('Results: Generator_Time_Series.xlsx exported')
+#    Generator_Time_Series = pd.DataFrame()
+#    df = pd.DataFrame()
+#    for y in range(1, Number_Years + 1):
+#        for s in range(1, Number_Scenarios + 1):
+#            for g in range(1, Number_Generator + 1):
+#                column_1 = 'Energy Generator: s=' + str(s) + ' g=' + str(g)
+#                column_2 = 'Fuel Cost: s=' + str(s) + ' g=' + str(g)
+#                Name = 'Generator ' + str(g)
+#
+#                for t in range(1, Number_Periods + 1):
+#                    df.loc[t,column_1] = Generator_Energy[s,y,g,t]
+#                    df.loc[t,column_2] = df.loc[t,column_1]*Generator_Data.loc['Marginal Cost [USD/Wh]', Name]
+#        Generator_Time_Series = Generator_Time_Series.append(df) 
+#            
+#    Generator_Time_Series.index = Scenarios.index           
+#    Generator_Time_Series.to_excel('Results/Generator_Time_Series.xlsx') 
+#    print('Results: Generator_Time_Series.xlsx exported')
     
-    Cost_Time_Series = pd.DataFrame()
-    for s in range(1, Number_Scenarios + 1):
-        name_1 = 'Lost_Load ' + str(s)
-        name_2 = 'Battery_Flow_Out ' + str(s)
-        name_3 = 'Battery_Flow_in ' + str(s)
-        name_4 = 'Total_Fuel_Cost ' + str(s)
-        for t in Scenarios.index:
-            Cost_Time_Series.loc[t,name_1] = Scenarios[name_1][t]*Size_variables[0]['VOLL']
-            Cost_Time_Series.loc[t,name_2] = Scenarios[name_2][t]*Size_variables[0]['Battery Unitary Reposition Cost']
-            Cost_Time_Series.loc[t,name_3] = Scenarios[name_3][t]*Size_variables[0]['Battery Unitary Reposition Cost']
-            Fuel_Cost = 0
-            for g in range(1, Number_Generator + 1):
-                name_5 = 'Fuel Cost: s=' + str(s) + ' g=' + str(g)
-                Fuel_Cost += Generator_Time_Series.loc[t,name_5]
-            Cost_Time_Series.loc[t,name_4] = Fuel_Cost
- 
-                
-    Scenario_Cost = pd.DataFrame()    
-    for s in range(1, Number_Scenarios + 1):
-        name_1 = 'Scenario ' + str(s)
-        Scenario_Cost.loc['VOLL',name_1] = Cost_Time_Series['Lost_Load ' + str(s)].sum()
-        Scenario_Cost.loc['Bat Out',name_1] = Cost_Time_Series['Battery_Flow_Out ' + str(s)].sum()
-        Scenario_Cost.loc['Bat In',name_1] = Cost_Time_Series['Battery_Flow_in ' + str(s)].sum()
-        Scenario_Cost.loc['Gen Cost',name_1] = Cost_Time_Series['Total_Fuel_Cost ' + str(s)].sum() 
-        
-        gen_oym = 0
-        for g in range(1, Number_Generator + 1):
-            Name_2 = 'Generator ' + str(g)
-            gen_oym += Generator_Data.loc['O&M Cost', Name_2]
-        Scenario_Cost.loc['Gen O&M Cost',name_1] = gen_oym
-        
-        renewable_energy_oym = 0
-        for r in range(1, Number_Renewable_Source + 1):
-            Name = 'Source ' + str(r)
-            renewable_energy_oym += Data_Renewable.loc['O&M Cost', Name]
-        Scenario_Cost.loc['RES O&M Cost',name_1] = renewable_energy_oym
-        
-        Scenario_Cost.loc['Battery O&M Cost',name_1] = Battery_Data['Battery']['O&M']
-        Scenario_Cost.loc['Operation Cost',name_1] = Scenario_Cost[name_1].sum()  
-        a = Scenario_Cost[name_1]['Operation Cost']
-        Discount_rate = Size_variables[0]['Discount Rate']
-        Years =  int(Size_variables[0]['Project Life Time'])
-        Scenario_Cost.loc['O&M',name_1] = Scenario_Cost.loc['Gen O&M Cost',name_1]+Scenario_Cost.loc['RES O&M Cost',name_1]+Scenario_Cost.loc['Battery O&M Cost',name_1]
-        
-        Scenario_Cost.loc['Present Gen Cost',name_1] = sum((Scenario_Cost.loc['Gen Cost',name_1]/(1+Discount_rate)**y) 
-                                        for y in range(1, Years+1)) 
-        Scenario_Cost.loc['Present VOLL Cost',name_1] = sum((Scenario_Cost.loc['VOLL',name_1]/(1+Discount_rate)**y) 
-                                        for y in range(1, Years+1)) 
-        
-        Scenario_Cost.loc['Present Bat Out Cost',name_1] = sum((Scenario_Cost.loc['Bat Out',name_1]/(1+Discount_rate)**y) 
-                                        for y in range(1, Years+1)) 
-        Scenario_Cost.loc['Present Bat In Cost',name_1] = sum((Scenario_Cost.loc['Bat In',name_1]/(1+Discount_rate)**y) 
-                                        for y in range(1, Years+1)) 
-        Scenario_Cost.loc['Present Bat Reposition Cost',name_1] = Scenario_Cost.loc['Present Bat Out Cost',name_1] + Scenario_Cost.loc['Present Bat In Cost',name_1]
-       
-        Scenario_Cost.loc['Present O&M Cost',name_1] = sum((Scenario_Cost.loc['O&M',name_1]/(1+Discount_rate)**y) 
-                                        for y in range(1, Years+1)) 
-        Scenario_Cost.loc['Present Operation Cost',name_1] = sum((a/(1+Discount_rate)**y) 
-                                        for y in range(1, Years+1)) 
-        
-        
-        Scenario_Cost.loc['Present Operation Cost Weighted',name_1] = Scenario_Cost[name_1]['Present Operation Cost']*Scenario_Information[name_1]['Scenario Weight']
-    
-    print('Results: Scenario_Cost dataframe created')
-
-    
-    NPC = pd.DataFrame()
-    NPC.loc['Battery Investment', 'Data'] = Battery_Data['Battery']['Invesment'] 
-    
-    gen_Investment = 0
-    for g in range(1, Number_Generator + 1):
-        Name_2 = 'Generator ' + str(g)
-        gen_Investment += Generator_Data.loc['Investment Generator', Name_2]
-    NPC.loc['Gen Investment Cost', 'Data'] = gen_Investment
-    
-    renewable_energy_invesment = 0
-    for r in range(1, Number_Renewable_Source + 1):
-            Name = 'Source ' + str(r)
-            renewable_energy_invesment += Data_Renewable.loc['Investment', Name]
-    NPC.loc['Renewable Investment Cost', 'Data'] = renewable_energy_invesment 
-    
-    operation_cost = 0
-    for s in range(1, Number_Scenarios + 1):
-        name_1 = 'Scenario ' + str(s)
-        operation_cost += Scenario_Cost[name_1]['Present Operation Cost Weighted']
-
-    NPC.loc['Present Operation Cost Weighted', 'Data'] = operation_cost
-
-    
-    NPC.loc['NPC', 'Data'] = NPC['Data'].sum()
-    NPC.loc['NPC LP', 'Data'] = Size_variables[0]['NPC']
-    NPC.loc['Investment', 'Data'] = NPC.loc['Battery Investment', 'Data']+NPC.loc['Gen Investment Cost', 'Data']+NPC.loc['Renewable Investment Cost', 'Data']
-    
-    Demand = pd.DataFrame()
-    NP_Demand = 0
-    for s in range(1, Number_Scenarios + 1):
-        a = 'Energy_Demand ' + str(s)
-        b = 'Scenario ' + str(s)    
-        k = 0
-        for y in range(1, Number_Years + 1):
-            Demand.loc[a,'Total Demand y=' + str(y)] = sum(Scenarios_2[a][i] for i in range(k, k + Number_Periods))
-            Demand.loc[a,'Present Demand y=' + str(y)] = Demand.loc[a,'Total Demand y=' + str(y)]/((1+Discount_rate)**y) 
-            k = k + Number_Periods
-        
-        Demand.loc[a,'Present Demand'] = sum(Demand.loc[a, 'Present Demand y=' + str(y)] for y in range(1,Number_Years+1)) 
-        Demand.loc[a,'Rate'] = Scenario_Information[b]['Scenario Weight']                                                         
-        Demand.loc[a,'Rated Demand'] = Demand.loc[a,'Rate']*Demand.loc[a,'Present Demand'] 
-        NP_Demand += Demand.loc[a,'Rated Demand']
-            
-            
-    LCOE = (Size_variables[0]['NPC']/NP_Demand)*1000
-    
+#    Cost_Time_Series = pd.DataFrame()
+#    for s in range(1, Number_Scenarios + 1):
+#        name_1 = 'Lost_Load ' + str(s)
+#        name_2 = 'Battery_Flow_Out ' + str(s)
+#        name_3 = 'Battery_Flow_in ' + str(s)
+#        name_4 = 'Total_Fuel_Cost ' + str(s)
+#        for t in Scenarios.index:
+#            Cost_Time_Series.loc[t,name_1] = Scenarios[name_1][t]*Size_variables[0]['VOLL']
+#            Cost_Time_Series.loc[t,name_2] = Scenarios[name_2][t]*Size_variables[0]['Battery Unitary Reposition Cost']
+#            Cost_Time_Series.loc[t,name_3] = Scenarios[name_3][t]*Size_variables[0]['Battery Unitary Reposition Cost']
+#            Fuel_Cost = 0
+#            for g in range(1, Number_Generator + 1):
+#                name_5 = 'Fuel Cost: s=' + str(s) + ' g=' + str(g)
+#                Fuel_Cost += Generator_Time_Series.loc[t,name_5]
+#            Cost_Time_Series.loc[t,name_4] = Fuel_Cost
+# 
+#                
+#    Scenario_Cost = pd.DataFrame()    
+#    for s in range(1, Number_Scenarios + 1):
+#        name_1 = 'Scenario ' + str(s)
+#        Scenario_Cost.loc['VOLL',name_1] = Cost_Time_Series['Lost_Load ' + str(s)].sum()
+#        Scenario_Cost.loc['Bat Out',name_1] = Cost_Time_Series['Battery_Flow_Out ' + str(s)].sum()
+#        Scenario_Cost.loc['Bat In',name_1] = Cost_Time_Series['Battery_Flow_in ' + str(s)].sum()
+#        Scenario_Cost.loc['Gen Cost',name_1] = Cost_Time_Series['Total_Fuel_Cost ' + str(s)].sum() 
+#        
+#        gen_oym = 0
+#        for g in range(1, Number_Generator + 1):
+#            Name_2 = 'Generator ' + str(g)
+#            gen_oym += Generator_Data.loc['O&M Cost', Name_2]
+#        Scenario_Cost.loc['Gen O&M Cost',name_1] = gen_oym
+#        
+#        renewable_energy_oym = 0
+#        for r in range(1, Number_Renewable_Source + 1):
+#            Name = 'Source ' + str(r)
+#            renewable_energy_oym += Data_Renewable.loc['O&M Cost', Name]
+#        Scenario_Cost.loc['RES O&M Cost',name_1] = renewable_energy_oym
+#        
+#        Scenario_Cost.loc['Battery O&M Cost',name_1] = Battery_Data['Battery']['O&M']
+#        Scenario_Cost.loc['Operation Cost',name_1] = Scenario_Cost[name_1].sum()  
+#        a = Scenario_Cost[name_1]['Operation Cost']
+#        Discount_rate = Size_variables[0]['Discount Rate']
+#        Years =  int(Size_variables[0]['Project Life Time'])
+#        Scenario_Cost.loc['O&M',name_1] = Scenario_Cost.loc['Gen O&M Cost',name_1]+Scenario_Cost.loc['RES O&M Cost',name_1]+Scenario_Cost.loc['Battery O&M Cost',name_1]
+#        
+#        Scenario_Cost.loc['Present Gen Cost',name_1] = sum((Scenario_Cost.loc['Gen Cost',name_1]/(1+Discount_rate)**y) 
+#                                        for y in range(1, Years+1)) 
+#        Scenario_Cost.loc['Present VOLL Cost',name_1] = sum((Scenario_Cost.loc['VOLL',name_1]/(1+Discount_rate)**y) 
+#                                        for y in range(1, Years+1)) 
+#        
+#        Scenario_Cost.loc['Present Bat Out Cost',name_1] = sum((Scenario_Cost.loc['Bat Out',name_1]/(1+Discount_rate)**y) 
+#                                        for y in range(1, Years+1)) 
+#        Scenario_Cost.loc['Present Bat In Cost',name_1] = sum((Scenario_Cost.loc['Bat In',name_1]/(1+Discount_rate)**y) 
+#                                        for y in range(1, Years+1)) 
+#        Scenario_Cost.loc['Present Bat Reposition Cost',name_1] = Scenario_Cost.loc['Present Bat Out Cost',name_1] + Scenario_Cost.loc['Present Bat In Cost',name_1]
+#       
+#        Scenario_Cost.loc['Present O&M Cost',name_1] = sum((Scenario_Cost.loc['O&M',name_1]/(1+Discount_rate)**y) 
+#                                        for y in range(1, Years+1)) 
+#        Scenario_Cost.loc['Present Operation Cost',name_1] = sum((a/(1+Discount_rate)**y) 
+#                                        for y in range(1, Years+1)) 
+#        
+#        
+#        Scenario_Cost.loc['Present Operation Cost Weighted',name_1] = Scenario_Cost[name_1]['Present Operation Cost']*Scenario_Information[name_1]['Scenario Weight']
+#    
+#    print('Results: Scenario_Cost dataframe created')
+#
+#    
+#    NPC = pd.DataFrame()
+#    NPC.loc['Battery Investment', 'Data'] = Battery_Data['Battery']['Invesment'] 
+#    
+#    gen_Investment = 0
+#    for g in range(1, Number_Generator + 1):
+#        Name_2 = 'Generator ' + str(g)
+#        gen_Investment += Generator_Data.loc['Investment Generator', Name_2]
+#    NPC.loc['Gen Investment Cost', 'Data'] = gen_Investment
+#    
+#    renewable_energy_invesment = 0
+#    for r in range(1, Number_Renewable_Source + 1):
+#            Name = 'Source ' + str(r)
+#            renewable_energy_invesment += Data_Renewable.loc['Investment', Name]
+#    NPC.loc['Renewable Investment Cost', 'Data'] = renewable_energy_invesment 
+#    
+#    operation_cost = 0
+#    for s in range(1, Number_Scenarios + 1):
+#        name_1 = 'Scenario ' + str(s)
+#        operation_cost += Scenario_Cost[name_1]['Present Operation Cost Weighted']
+#
+#    NPC.loc['Present Operation Cost Weighted', 'Data'] = operation_cost
+#
+#    
+#    NPC.loc['NPC', 'Data'] = NPC['Data'].sum()
+#    NPC.loc['NPC LP', 'Data'] = Size_variables[0]['NPC']
+#    NPC.loc['Investment', 'Data'] = NPC.loc['Battery Investment', 'Data']+NPC.loc['Gen Investment Cost', 'Data']+NPC.loc['Renewable Investment Cost', 'Data']
+#    
+#    Demand = pd.DataFrame()
+#    NP_Demand = 0
+#    for s in range(1, Number_Scenarios + 1):
+#        a = 'Energy_Demand ' + str(s)
+#        b = 'Scenario ' + str(s)    
+#        k = 0
+#        for y in range(1, Number_Years + 1):
+#            Demand.loc[a,'Total Demand y=' + str(y)] = sum(Scenarios_2[a][i] for i in range(k, k + Number_Periods))
+#            Demand.loc[a,'Present Demand y=' + str(y)] = Demand.loc[a,'Total Demand y=' + str(y)]/((1+Discount_rate)**y) 
+#            k = k + Number_Periods
+#        
+#        Demand.loc[a,'Present Demand'] = sum(Demand.loc[a, 'Present Demand y=' + str(y)] for y in range(1,Number_Years+1)) 
+#        Demand.loc[a,'Rate'] = Scenario_Information[b]['Scenario Weight']                                                         
+#        Demand.loc[a,'Rated Demand'] = Demand.loc[a,'Rate']*Demand.loc[a,'Present Demand'] 
+#        NP_Demand += Demand.loc[a,'Rated Demand']
+#            
+#            
+#    LCOE = (Size_variables[0]['NPC']/NP_Demand)*1000
+#    
     Data = []
     Data.append(NPC)
-    Data.append(Size_variables)
+    Data.append(Battery_Data)
     Data.append(Scenarios)
     Data.append(Generator_Data)
     Data.append(Scenario_Information)

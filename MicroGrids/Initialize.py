@@ -19,7 +19,7 @@ def Initialize_years(model, y):
 Data_file = "Example/Data.dat"
 Data_import = open(Data_file).readlines()
 
-n_scenarios = int((re.findall('\d+',Data_import[34])[0]))
+n_scenarios = int((re.findall('\d+',Data_import[38])[0]))
 n_years = int((re.findall('\d+',Data_import[2])[0]))
 n_periods = int((re.findall('\d+',Data_import[0])[0]))
 
@@ -143,44 +143,110 @@ def Initialize_Renewable_Energy(model,s,r,t):
     
     :return: The energy yield of one PV for the period t.
     '''
-    
     column = (s-1)*model.Renewable_Source + r 
     return float(Renewable_Energy[column][t])   
     
     
     
 def Marginal_Cost_Generator_1_Dispatch(model):
-    
     return model.Diesel_Cost/(model.Low_Heating_Value*model.Generator_Efficiency)
 
 def Start_Cost_Dispatch(model):
-    
     return model.Marginal_Cost_Generator_1*model.Generator_Nominal_Capacity*model.Cost_Increase
 
 def Marginal_Cost_Generator_Dispatch(model):
-    
     return (model.Marginal_Cost_Generator_1*model.Generator_Nominal_Capacity-model.Start_Cost_Generator)/model.Generator_Nominal_Capacity 
 
-def Min_Bat_Capacity(model):
+
+def Initialize_Upgrades_Number(model):
+    
+    Data_file = "Example/Data.dat"
+    Data_import = open(Data_file).readlines()
+    n_years = int((re.findall('\d+',Data_import[2])[0]))
+    step_duration = int((re.findall('\d+',Data_import[4])[0]))
+    min_last_step_duration = int((re.findall('\d+',Data_import[6])[0]))
+
+    if n_years % step_duration == 0:
+        n_upgrades = n_years/step_duration
+        return n_upgrades
+    
+    else:
+        n_upgrades = 1
+        for y in  range(1, n_years + 1):
+            if y % step_duration == 0 and n_years - y > min_last_step_duration:
+                n_upgrades += 1
+        return int(n_upgrades)
+
+def Initialize_YearUpgrade_Tuples(model):
+    
+    upgrade_years_list = [1 for i in range(len(model.upgrades))]
+    s_dur = model.Step_Duration
+   
+    for i in range(1, len(model.upgrades)): 
+        upgrade_years_list[i] = upgrade_years_list[i-1] + s_dur
+    
+    yu_tuples_list = [0 for i in model.years]
+    
+    if model.Upgrades_Number == 1:
+    
+        for y in model.years:
+            
+            yu_tuples_list[y-1] = (y, 1)
+    
+    else:
         
+        for y in model.years:    
+        
+            for i in range(len(upgrade_years_list)-1):
+                if y >= upgrade_years_list[i] and y < upgrade_years_list[i+1]:
+                    yu_tuples_list[y-1] = (y, model.upgrades[i+1])
+                
+                elif y >= upgrade_years_list[-1]:
+                    yu_tuples_list[y-1] = (y, len(model.upgrades))   
+    
+    print(yu_tuples_list)
+    return yu_tuples_list
+
+
+def Min_Bat_Capacity(model,ut):
+    
     Periods = model.Battery_Independency*24
-    Len = int(model.Periods*model.Years/Periods)
+    Len =  int(model.Periods*model.Years/Periods)
+    
     Grouper = 1
     index = 1
     for i in range(1, Len+1):
-        for j in range(1,Periods+1):
-            
+        for j in range(1,Periods+1):      
             Energy_Demand_2.loc[index, 'Grouper'] = Grouper
-            index += 1
-            
+            index += 1      
         Grouper += 1
-            
-    Period_Energy = Energy_Demand_2.groupby(['Grouper']).sum()
+
+    upgrade_years_list = [1 for i in range(len(model.upgrades))]
     
+    for u in range(1, len(model.upgrades)):
+        upgrade_years_list[u] =upgrade_years_list[u-1] + model.Step_Duration
+    
+    
+    if model.Upgrades_Number ==1:
+        Energy_Demand_Upgrade = Energy_Demand_2
+        
+    else:
+        if ut==1:
+            start = 0
+            Energy_Demand_Upgrade = Energy_Demand_2.loc[start : model.Periods*(upgrade_years_list[ut]-1), :]   
+        
+        elif ut == len(model.upgrades):
+            start = model.Periods*(upgrade_years_list[ut-1] -1)+1
+            Energy_Demand_Upgrade = Energy_Demand_2.loc[start :, :]   
+        
+        else:
+            start = model.Periods*(upgrade_years_list[ut-1] -1)+1
+            Energy_Demand_Upgrade = Energy_Demand_2.loc[start : model.Periods*(upgrade_years_list[ut]-1), :]
+    
+
+    Period_Energy = Energy_Demand_Upgrade.groupby(['Grouper']).sum()        
     Period_Average_Energy = Period_Energy.mean()
     
-    Available_Energy = sum(Period_Average_Energy[s]*model.Scenario_Weight[s] 
-        for s in model.scenario) 
-
+    Available_Energy = sum(Period_Average_Energy[s]*model.Scenario_Weight[s] for s in model.scenario) 
+    
     return  Available_Energy/(1-model.Deep_of_Discharge)
-

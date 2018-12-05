@@ -1,6 +1,10 @@
 param: Periods := 8760;
 
-param: Years := 2;
+param: Years := 15;
+
+param: Step_Duration :=3;
+
+param: Min_Last_Step_Duration := 1;
 
 param: StartDate := '21/03/2017 00:00:00';
 
@@ -34,28 +38,24 @@ param: Battery_Initial_SOC := 1;
 
 param: Scenarios := 1; ####
 
-param: Renewable_Source := 2;
+param: Renewable_Source := 1;
 
 param: Renewable_Nominal_Capacity :=
 
-1	250
-2	250;
+1	250;
 
 param: Renewable_Inverter_Efficiency := 
 
-1	1
-2	1;
+1	1;
 
 
 param: Renewable_Invesment_Cost :=# 4
 
-1	1.5
-2	1.5;
+1	1.5;
 
 param: Maintenance_Operation_Cost_Renewable := 
 
-1	0.015
-2	0.015;
+1	0.015;
 
 
 param: Generator_Type := 1;
@@ -69,6 +69,7 @@ param: Maintenance_Operation_Cost_Generator :=
 1	0.045;
 
 param: Fuel_Cost := 
+
 1	0.68;
 
 param: Generator_Efficiency := 
@@ -76,6 +77,7 @@ param: Generator_Efficiency :=
 1	0.34;
 
 param: Low_Heating_Value := 
+
 1	9890;
 
 param: Scenario_Weight :=

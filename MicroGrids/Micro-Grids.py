@@ -12,12 +12,12 @@ Integer_Generator_Data, Integer_Results, Economic_Analysis
 from Model_Creation import Model_Creation, Model_Creation_binary, Model_Creation_Integer, Model_Creation_Dispatch
 from Model_Resolution import Model_Resolution, Model_Resolution_binary, Model_Resolution_Integer, Model_Resolution_Dispatch
 #from Economical_Analysis import Levelized_Cost_Of_Energy
-
+    
 
 # Type of problem formulation:
 formulation = 'LP'
 
-Renewable_Penetration = 0.6 # a number from 0 to 1.
+Renewable_Penetration = 0 # a number from 0 to 1.
 Battery_Independency = 0  # number of days of battery independency
 
 model = AbstractModel() # define type of optimization problem

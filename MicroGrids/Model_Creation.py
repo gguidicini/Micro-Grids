@@ -11,8 +11,8 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
     :param model: Pyomo model as defined in the Micro-Grids library.
     
     '''
-    from pyomo.environ import  Param, RangeSet, NonNegativeReals, Var
-    from Initialize import Initialize_years, Initialize_Demand, Battery_Reposition_Cost, Initialize_Renewable_Energy, Marginal_Cost_Generator_1,Min_Bat_Capacity # Import library with initialitation funtions for the parameters
+    from pyomo.environ import  Param, RangeSet, NonNegativeReals, Var, Set
+    from Initialize import Initialize_years, Initialize_Demand, Battery_Reposition_Cost, Initialize_Renewable_Energy, Marginal_Cost_Generator_1, Min_Bat_Capacity, Initialize_YearUpgrade_Tuples, Initialize_Upgrades_Number # Import library with initialitation funtions for the parameters
 
     # Time parameters
     model.Periods = Param(within=NonNegativeReals) # Number of periods of analysis of the energy variables
@@ -21,14 +21,18 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
     model.Scenarios = Param() 
     model.Renewable_Source = Param()
     model.Generator_Type = Param()
+    model.Step_Duration = Param()
+    model.Min_Last_Step_Duration = Param()
+    model.Upgrades_Number = Param(initialize = Initialize_Upgrades_Number)
     
-    #SETS
+    # SETS
     model.periods = RangeSet(1, model.Periods) # Creation of a set from 1 to the number of periods in each year
     model.years = RangeSet(1, model.Years) # Creation of a set from 1 to the number of years of the project
     model.scenario = RangeSet(1, model.Scenarios) # Creation of a set from 1 to the numbero scenarios to analized
     model.renewable_source = RangeSet(1, model.Renewable_Source)
     model.generator_type = RangeSet(1, model.Generator_Type)    
-
+    model.upgrades = RangeSet(1, model.Upgrades_Number)
+    model.yu_tup = Set(dimen = 2, initialize = Initialize_YearUpgrade_Tuples)
 
     # PARAMETERS
     model.Scenario_Weight = Param(model.scenario, within=NonNegativeReals) #########
@@ -60,7 +64,7 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
     model.Battery_Initial_SOC = Param(within=NonNegativeReals)
     if  Battery_Independency > 0:
         model.Battery_Independency = Battery_Independency
-        model.Battery_Min_Capacity = Param(initialize=Min_Bat_Capacity)
+        model.Battery_Min_Capacity = Param(model.upgrades, initialize=Min_Bat_Capacity)
   
     # Parameters of the diesel generator
     model.Generator_Efficiency = Param(model.generator_type) # Generator efficiency to trasform heat into electricity %
@@ -96,24 +100,24 @@ def Model_Creation(model, Renewable_Penetration,Battery_Independency):
    
     # Variables associated to the solar panels
         
-    model.Renewable_Units = Var(model.renewable_source,
+    model.Renewable_Units = Var(model.upgrades, model.renewable_source,
                                 within=NonNegativeReals) # Number of units of solar panels
-    model.Total_Energy_Renewable = Var(model.scenario,model.renewable_source,
+    model.Total_Energy_Renewable = Var(model.scenario, model.years, model.renewable_source,
                                 model.periods, within=NonNegativeReals) # Energy generated for the Pv sistem in Wh
 
-
     # Variables associated to the battery bank
-    model.Battery_Nominal_Capacity = Var(within=NonNegativeReals) # Capacity of the battery bank in Wh
+    model.Battery_Nominal_Capacity = Var(model.upgrades, within=NonNegativeReals) # Capacity of the battery bank in Wh
     model.Energy_Battery_Flow_Out = Var(model.scenario, model.years, model.periods,
                                         within=NonNegativeReals) # Battery discharge energy in wh
     model.Energy_Battery_Flow_In = Var(model.scenario, model.years, model.periods, 
                                        within=NonNegativeReals) # Battery charge energy in wh
     model.State_Of_Charge_Battery = Var(model.scenario, model.years, model.periods, 
                                         within=NonNegativeReals) # State of Charge of the Battery in wh
-    model.Maximun_Charge_Power = Var(within=NonNegativeReals)
-    model.Maximun_Discharge_Power = Var(within=NonNegativeReals)
+    model.Maximun_Charge_Power = Var(model.upgrades, within=NonNegativeReals)
+    model.Maximun_Discharge_Power = Var(model.upgrades, within=NonNegativeReals)
+    
     # Variables associated to the diesel generator
-    model.Generator_Nominal_Capacity = Var(model.generator_type,
+    model.Generator_Nominal_Capacity = Var(model.upgrades, model.generator_type,
                                            within=NonNegativeReals) # Capacity  of the diesel generator in Wh
 
     model.Generator_Energy = Var(model.scenario, model.years, model.generator_type,

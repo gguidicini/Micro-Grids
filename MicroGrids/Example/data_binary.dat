@@ -16,7 +16,7 @@ param: PV_invesment_Cost := 1.67;
 
 param: Battery_Invesment_Cost := 0.6;
 
-param: Generator_Invesment_Cost := 1.48;
+param: Generator_Investment_Cost := 1.48;
 
 param: Maintenance_Operation_Cost_PV := 0.015;
 
