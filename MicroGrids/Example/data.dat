@@ -1,8 +1,8 @@
 param: Periods := 8760;
 
-param: Years := 15;
+param: Years := 5;
 
-param: Step_Duration :=3;
+param: Step_Duration :=2;
 
 param: Min_Last_Step_Duration := 1;
 

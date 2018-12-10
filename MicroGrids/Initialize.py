@@ -173,7 +173,7 @@ def Initialize_Upgrades_Number(model):
     else:
         n_upgrades = 1
         for y in  range(1, n_years + 1):
-            if y % step_duration == 0 and n_years - y > min_last_step_duration:
+            if y % step_duration == 0 and n_years - y >= min_last_step_duration:
                 n_upgrades += 1
         return int(n_upgrades)
 
