@@ -1,18 +1,6 @@
 
 import pandas as pd
-import pyomo.environ 
 import re
-
-def Initialize_years(model, y):
-
-    '''
-    This function returns the value of each year of the project. 
-    
-    :param model: Pyomo model as defined in the Model_Creation script.
-    
-    :return: The year y.
-    '''    
-    return y
 
 # This section extracts the values of Scenarios, Periods, Years from data.dat
 # and creates ranges for them
@@ -69,18 +57,6 @@ def Initialize_Demand(model, s, y, t):
     '''
     return float(Energy_Demand[0][(s,y,t)])
 
-#PV_Energy = pd.read_excel('Example/PV_Energy.xls') # open the PV energy yield file
-#
-#def Initialize_PV_Energy(model, i, t):
-#    '''
-#    This function returns the value of the energy yield by one PV under the characteristics of the system 
-#    analysis for each period of analysis from a excel file.
-#    
-#    :param model: Pyomo model as defined in the Model_Creation script.
-#    
-#    :return: The energy yield of one PV for the period t.
-#    '''
-#    return float(PV_Energy[i][t])
 
 def Initialize_Demand_Dispatch(model, t):
     '''
@@ -93,30 +69,10 @@ def Initialize_Demand_Dispatch(model, t):
     '''
     return float(Energy_Demand[1][t])
 
-
-def Initialize_PV_Energy_Dispatch(model, t):
-    '''
-    This function returns the value of the energy yield by one PV under the characteristics of the system 
-    analysis for each period of analysis from a excel file.
     
-    :param model: Pyomo model as defined in the Model_Creation script.
+def Generator_Marginal_Cost(model,g):
     
-    :return: The energy yield of one PV for the period t.
-    '''
-    return float(PV_Energy[1][t])
-    
-    
-def Marginal_Cost_Generator_1(model,g):
-    
-    return model.Fuel_Cost[g]/(model.Low_Heating_Value[g]*model.Generator_Efficiency[g])
-
-#def Start_Cost(model,i):
-#    
-#    return #model.Marginal_Cost_Generator_1[i]*model.Generator_Nominal_Capacity[i]*model.Cost_Increase[i]
-#
-#def Marginal_Cost_Generator(model, i):
-#    
-#    return #(model.Marginal_Cost_Generator_1[i]*model.Generator_Nominal_Capacity[i]-model.Start_Cost_Generator[i])/model.Generator_Nominal_Capacity[i] 
+    return model.Fuel_Cost[g]/(model.Lower_Heating_Value[g]*model.Generator_Efficiency[g])
 
 
 def Capital_Recovery_Factor(model):
@@ -126,10 +82,10 @@ def Capital_Recovery_Factor(model):
     return a/b
 
     
-def Battery_Reposition_Cost(model):
+def Unitary_Battery_Reposition_Cost(model):
    
-    unitary_battery_cost = model.Battery_Invesment_Cost - model.Battery_Electronic_Invesmente_Cost
-    return unitary_battery_cost/(model.Battery_Cycles*2*(1-model.Deep_of_Discharge))
+    Unitary_Battery_Cost = model.Battery_Investment_Cost - model.Battery_Electronic_Investment_Cost
+    return Unitary_Battery_Cost/(model.Battery_Cycles*2*(1-model.Depth_of_Discharge))
     
     
 Renewable_Energy = pd.read_excel('Example/Renewable_Energy.xls') # open the PV energy yield file
@@ -143,20 +99,9 @@ def Initialize_Renewable_Energy(model,s,r,t):
     
     :return: The energy yield of one PV for the period t.
     '''
-    column = (s-1)*model.Renewable_Source + r 
+    column = (s-1)*model.Renewable_Sources + r 
     return float(Renewable_Energy[column][t])   
     
-    
-    
-def Marginal_Cost_Generator_1_Dispatch(model):
-    return model.Diesel_Cost/(model.Low_Heating_Value*model.Generator_Efficiency)
-
-def Start_Cost_Dispatch(model):
-    return model.Marginal_Cost_Generator_1*model.Generator_Nominal_Capacity*model.Cost_Increase
-
-def Marginal_Cost_Generator_Dispatch(model):
-    return (model.Marginal_Cost_Generator_1*model.Generator_Nominal_Capacity-model.Start_Cost_Generator)/model.Generator_Nominal_Capacity 
-
 
 def Initialize_Upgrades_Number(model):
     
@@ -173,7 +118,7 @@ def Initialize_Upgrades_Number(model):
     else:
         n_upgrades = 1
         for y in  range(1, n_years + 1):
-            if y % step_duration == 0 and n_years - y >= min_last_step_duration:
+            if y % step_duration == 0 and n_years - y > min_last_step_duration:
                 n_upgrades += 1
         return int(n_upgrades)
 
@@ -247,6 +192,6 @@ def Min_Bat_Capacity(model,ut):
     Period_Energy = Energy_Demand_Upgrade.groupby(['Grouper']).sum()        
     Period_Average_Energy = Period_Energy.mean()
     
-    Available_Energy = sum(Period_Average_Energy[s]*model.Scenario_Weight[s] for s in model.scenario) 
+    Available_Energy = sum(Period_Average_Energy[s]*model.Scenario_Weight[s] for s in model.scenarios) 
     
-    return  Available_Energy/(1-model.Deep_of_Discharge)
+    return  Available_Energy/(1-model.Depth_of_Discharge)

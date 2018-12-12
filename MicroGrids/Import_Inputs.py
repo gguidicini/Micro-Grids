@@ -23,6 +23,7 @@ def Renewable_Outputs():
 
     temperatures = Time_params[:]['Temperature'] + T_0    # K
     
+    
     if Ren_types['values']['n_WT_types'] > 0:
     
         # Definition of geographical parameters
