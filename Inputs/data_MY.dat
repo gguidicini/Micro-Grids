@@ -1,0 +1,94 @@
+param: Periods := 8760;     
+
+param: Years := 20;
+
+param: Step_Duration := 5;
+
+param: Min_Last_Step_Duration := 1;
+
+param: StartDate := '01/01/2015 00:00:00';
+
+param: Delta_Time := 1.0;
+
+param: Investment_Cost_Limit := 1000000;
+
+param: Battery_Investment_Cost := 0.44744;                  # from literature
+
+param: Battery_Electronic_Investment_Cost := 0.089488;           #########
+
+param: Battery_Operation_Maintenance_Cost:= 0.02;            # from ENEL data: 30'000 $/y / 752 kWh / 2,286 $/Wh
+
+param: Discount_Rate := 0;                               #########
+
+param: Lost_Load_Probability := 0.0;
+
+param: Discharge_Battery_Efficiency := 0.95;                #########
+
+param: Charge_Battery_Efficiency := 0.95;                 #########
+
+param: Depth_of_Discharge := 0.2;                         # from FIAMM data
+
+param: Value_Of_Lost_Load := 0.0;
+
+param: Maximum_Battery_Discharge_Time := 1;               
+
+param: Maximum_Battery_Charge_Time := 3;                  
+
+param: Battery_Cycles := 4500;                            # from ENEL data
+
+param: Battery_Initial_SOC := 1;
+
+param: Scenarios := 1; 
+
+param: Renewable_Sources := 2;
+
+param: Renewable_Nominal_Capacity :=
+
+1   1000
+2   30000;                                                                                                 # from ENEL data
+
+param: Renewable_Inverter_Efficiency := 
+
+1	 0.95
+2   1;
+
+
+param: Renewable_Investment_Cost :=
+
+1  4.6937
+2  6.59535;   
+
+
+param: Renewable_Inv_Cost_Reduction :=
+
+1  0.9
+2  0.9;                                                                                              # from ENEL doc 4
+ 
+ 
+param: Renewable_Operation_Maintenance_Cost := 
+
+1  0.02                                                       
+2  0.02;                                                         
+
+
+param: Generator_Types := 1;
+
+param: Generator_Investment_Cost := 
+
+1	0.4201;                                                 # from ENEL doc 2 (from eBay: 47500 $ / 250 kW = 0.19 $/W)
+
+param: Generator_Operation_Maintenance_Cost := 
+
+1	0.10;                                                   # from ENEL doc 2: 12000 $/y / 250000 W / 0.08 $/W
+
+param: Generator_Efficiency := 
+
+1	0.30;                                                   ##########
+
+param: Lower_Heating_Value := 
+
+1	9840;
+
+param: Scenario_Weight :=
+
+1   1;
