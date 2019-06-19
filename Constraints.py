@@ -1,4 +1,4 @@
-# Objective funtion
+
 
 def Net_Present_Cost(model): # OBJETIVE FUNTION: MINIMIZE THE NPC FOR THE SISTEM
     '''

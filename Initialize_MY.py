@@ -1,16 +1,23 @@
+"""
+MicroGridsPy - Multi-year capacity-expansion (MYCE) 2018/2019
+Based on the original model by Sergio Balderrama and Sylvain Quoilin
+Authors: Giulia Guidicini, Lorenzo Rinaldi - Politecnico di Milano
+"""
 
 import pandas as pd
 import re
 
-# This section extracts the values of Scenarios, Periods, Years from data.dat
-# and creates ranges for them
+'''
+This section extracts the values of Scenarios, Periods, Years from data.dat
+and creates ranges for them
+'''
 Data_file = "Inputs/data_MY.dat"
 Data_import = open(Data_file).readlines()
 
-n_scenarios = int((re.findall('\d+',Data_import[40])[0]))
+n_scenarios = int((re.findall('\d+',Data_import[38])[0]))
 n_years = int((re.findall('\d+',Data_import[2])[0]))
 n_periods = int((re.findall('\d+',Data_import[0])[0]))
-n_generators = int((re.findall('\d+',Data_import[73])[0]))
+n_generators = int((re.findall('\d+',Data_import[66])[0]))
 
 scenario = [i for i in range(1,n_scenarios+1)]
 year = [i for i in range(1,n_years+1)]
@@ -18,9 +25,10 @@ period = [i for i in range(1,n_periods+1)]
 generator = [i for i in range(1,n_generators+1)]
 
 
-# This section imports the multi-year Demand and creates a Multi-indexed pd.DataFrame for it
+'''
+This section imports the multi-year Demand and creates a Multi-indexed pd.DataFrame for it
+'''
 Demand = pd.read_excel('Inputs/Demand.xls')
-
 Energy_Demand_Series = pd.Series()
 
 for i in range(1,n_years*n_scenarios+1):
@@ -33,8 +41,10 @@ index = pd.MultiIndex.from_product(frame, names=['scenario','year','period'])
 Energy_Demand.index = index
 
 
-# This section creates a pd.DataFrame which stores the multi-year demand of each scenario
-# in a different column (used in Initialize: Min_Bat_Capacity)
+'''
+This section creates a pd.DataFrame which stores the multi-year demand of each scenario
+in a different column (used in Initialize: Min_Bat_Capacity)
+'''
 Energy_Demand_2 = pd.DataFrame()    
 
 for s in scenario:
@@ -47,22 +57,15 @@ for s in scenario:
 index_2 = pd.RangeIndex(1,n_years*n_periods+1)
 Energy_Demand_2.index = index_2
 
-
 def Initialize_Demand(model, s, y, t):
-    '''
-    This function returns the value of the energy demand from a system for each period of analysis from an excel file.
-    
-    :param model: Pyomo model as defined in the Model_Creation script.
-        
-    :return: The energy demand for the period t.     
-        
-    '''
     return float(Energy_Demand[0][(s,y,t)])
 
 
-
+'''
+This section creates a pd.DataFrame which stores the multi-year evolution of fuel cost for each scenario
+in a different column (other parameters could be modelled in this way)
+'''
 FuelCost = pd.read_excel('Inputs/Fuel_Cost.xls')
-
 Fuel_Cost_Series = pd.Series()
 
 for i in range(1,n_years*n_scenarios+1):
@@ -72,31 +75,26 @@ for i in range(1,n_years*n_scenarios+1):
 Fuel_Cost = pd.DataFrame(Fuel_Cost_Series) 
 frame = [scenario,year,generator]
 index = pd.MultiIndex.from_product(frame, names=['scenario','year','generator'])
-
 Fuel_Cost.index = index 
 
-
-
 def Initialize_Fuel_Cost(model,s,y,g):
-
     return float(Fuel_Cost.loc[s,y,g])
 
 
 def Generator_Marginal_Cost(model,s,y,g):
-    
     return model.Fuel_Cost[s,y,g]/(model.Lower_Heating_Value[g]*model.Generator_Efficiency[g])
   
     
-
 def Capital_Recovery_Factor(model):
-   
     a = model.Discount_Rate*((1+model.Discount_Rate)**model.Years)
     b = ((1 + model.Discount_Rate)**model.Years)-1
     return a/b
 
     
 def Unitary_Battery_Reposition_Cost(model):
-   
+    '''
+    The function calculates the unitary battery replacement cost as
+    '''
     Unitary_Battery_Cost = model.Battery_Investment_Cost - model.Battery_Electronic_Investment_Cost
     return Unitary_Battery_Cost/(model.Battery_Cycles*2*(1-model.Depth_of_Discharge))
     
@@ -105,19 +103,16 @@ Renewable_Energy = pd.read_excel('Inputs/Renewable_Energy.xls') # open the PV en
 
 def Initialize_Renewable_Energy(model,s,r,t):
     '''
-    This function returns the value of the energy yield by one PV under the characteristics of the system 
-    analysis for each period of analysis from a excel file.
-    
-    :param model: Pyomo model as defined in the Model_Creation script.
-    
-    :return: The energy yield of one PV for the period t.
+    The function returns the energy produced from each RES in each period of time t. 
     '''
     column = (s-1)*model.Renewable_Sources + r 
     return float(Renewable_Energy[column][t])   
     
-
-def Initialize_Upgrades_Number(model):
     
+def Initialize_Upgrades_Number(model):
+    '''
+    The function returns the number of investment steps (upgrades) to be performed
+    '''
     Data_file = "Inputs/data_MY.dat"
     Data_import = open(Data_file).readlines()
     n_years = int((re.findall('\d+',Data_import[2])[0]))
@@ -135,34 +130,28 @@ def Initialize_Upgrades_Number(model):
                 n_upgrades += 1
         return int(n_upgrades)
 
+
 def Initialize_YearUpgrade_Tuples(model):
-    
+    '''
+    The function matches each year of the time horizon with its correspondant investment step
+    and returns a list of tuples used to initialize the Pyomo bidimensional Set "yu_tup"
+    '''    
     upgrade_years_list = [1 for i in range(len(model.upgrades))]
-    s_dur = model.Step_Duration
-   
+    s_dur = model.Step_Duration   
     for i in range(1, len(model.upgrades)): 
-        upgrade_years_list[i] = upgrade_years_list[i-1] + s_dur
-    
-    yu_tuples_list = [0 for i in model.years]
-    
-    if model.Upgrades_Number == 1:
-    
-        for y in model.years:
-            
-            yu_tuples_list[y-1] = (y, 1)
-    
-    else:
-        
-        for y in model.years:    
-        
+        upgrade_years_list[i] = upgrade_years_list[i-1] + s_dur    
+    yu_tuples_list = [0 for i in model.years]    
+    if model.Upgrades_Number == 1:    
+        for y in model.years:            
+            yu_tuples_list[y-1] = (y, 1)    
+    else:        
+        for y in model.years:            
             for i in range(len(upgrade_years_list)-1):
                 if y >= upgrade_years_list[i] and y < upgrade_years_list[i+1]:
-                    yu_tuples_list[y-1] = (y, model.upgrades[i+1])
-                
+                    yu_tuples_list[y-1] = (y, model.upgrades[i+1])                
                 elif y >= upgrade_years_list[-1]:
                     yu_tuples_list[y-1] = (y, len(model.upgrades))   
-    
-    print(yu_tuples_list)
+    print('Time horizon (year,investment-step): ' + str(yu_tuples_list))
     return yu_tuples_list
 
 

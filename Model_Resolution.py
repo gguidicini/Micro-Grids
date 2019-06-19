@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from pyomo.opt import SolverFactory
 from pyomo.environ import Objective, minimize, Constraint

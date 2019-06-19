@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-
 
 def Model_Creation(model, Renewable_Penetration,Battery_Independency):
     

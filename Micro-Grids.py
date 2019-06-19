@@ -1,4 +1,11 @@
+"""
+MicroGridsPy - Multi-year capacity-expansion (MYCE) 2018/2019
+Based on the original model by Sergio Balderrama and Sylvain Quoilin
+Authors: Giulia Guidicini, Lorenzo Rinaldi - Politecnico di Milano
+"""
 
+
+############### MULTI-YEAR CAPACITY-EXPANSION MODEL ###########################
 
 Multi_Year = 'Yes'   #Options: Yes / No
 
@@ -14,26 +21,22 @@ if Multi_Year == 'Yes':
     from Results_MY import Plot_Energy_Total, Load_Results, Integer_Time_Series, Print_Results, Energy_Mix
     from Model_Creation_MY import Model_Creation
     from Model_Resolution_MY import Model_Resolution
-#    from Import_Inputs import Renewable_Outputs
-    
-    
-    #Renewable_Outputs() # comment this line for computational speed once executed the first time
-                        # OR if the renewable outputs yearly data are already available
-    
-    Optimization_Goal = 'NPC'  # Options: NPC / Operation cost 
+   
+        
+#    Optimization_Goal = 'NPC'  # Options: NPC / Operation cost 
     
     Renewable_Penetration = 0  # a number from 0 to 1.
-    Battery_Independency = 0   # number of days of battery independency
+    Battery_Independency = 0   # number of days of battery independence
     
     model = AbstractModel() # define type of optimization problem
     
     # Optimization model    
-    Model_Creation(model,Optimization_Goal, Renewable_Penetration, Battery_Independency) # Creation of the Sets, parameters and variables.
-    instance = Model_Resolution(model, Optimization_Goal, Renewable_Penetration,
+    Model_Creation(model, Renewable_Penetration, Battery_Independency) # Creation of the Sets, parameters and variables.
+    instance = Model_Resolution(model, Renewable_Penetration,
                                 Battery_Independency) # Resolution of the instance
     
-    ## Upload the results from the instance and saving it in excel files
-    Data = Load_Results(instance, Optimization_Goal) # Extract the results of energy from the instance and save it in a excel file 
+    # Upload the results from the instance and saving it in excel files
+    Data = Load_Results(instance) # Extract the results of energy from the instance and save it in a excel file 
     NPC = Data[0]
     Scenarios =  Data[2]
     Scenario_Probability = Data[4]
@@ -55,7 +58,7 @@ if Multi_Year == 'Yes':
 
     # Data Analisys    
     Energy_Mix_S = Energy_Mix(instance,Scenarios,Scenario_Probability)
-    Print_Results(LCOE, NPC, TotVarCost, TotInvCost, Optimization_Goal)  
+    Print_Results(LCOE, NPC, TotVarCost, TotInvCost)  
 
     
 ################################################################################################    
@@ -100,6 +103,6 @@ elif Multi_Year == 'No':
     Plot_Energy_Total(instance, Time_Series, plot, Plot_Date, PlotTime)
     
     # Data Analisys
-    Print_Results(instance, Generator_Data, Data_Renewable, Results, LCOE_1)#, LCOE_2)  
+    Print_Results(instance, Generator_Data, Data_Renewable, Results, LCOE_1)  
     Energy_Mix_S = Energy_Mix(instance,Scenarios,Scenario_Probability)
     
