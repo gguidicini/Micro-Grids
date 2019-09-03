@@ -46,6 +46,7 @@ if Multi_Year == 'Yes':
     LCOE = Data[5]
     TotVarCost = Data[7]
     TotInvCost = Data[8]
+    SalvageValue = Data[9]
          
     # Energy Plot    
     S = 1 # Plot scenario
@@ -58,7 +59,7 @@ if Multi_Year == 'Yes':
 
     # Data Analisys    
     Energy_Mix_S = Energy_Mix(instance,Scenarios,Scenario_Probability)
-    Print_Results(LCOE, NPC, TotVarCost, TotInvCost)  
+    Print_Results(LCOE, NPC, TotVarCost, TotInvCost, SalvageValue)  
 
     
 ################################################################################################    

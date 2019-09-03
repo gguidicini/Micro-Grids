@@ -348,6 +348,7 @@ def Load_Results(instance):
     NPC = instance.ObjectiveFuntion.expr()
     
     TotVarCost = instance.Total_Variable_Cost.value
+    SalvageValue = instance.Salvage_Value.value
     TotInvCost = instance.Investment_Cost.value
     VOLL = instance.Value_Of_Lost_Load.value
     Renewable_Units = instance.Renewable_Units.get_values()
@@ -469,6 +470,7 @@ def Load_Results(instance):
     Data.append(Data_Renewable)
     Data.append(TotVarCost)
     Data.append(TotInvCost)
+    Data.append(SalvageValue)
     
     print('Results: Loadresults1 executed properly')
     return Data
@@ -808,10 +810,11 @@ def Energy_Mix(instance,Scenarios,Scenario_Probability):
     return Energy_Mix    
     
     
-def Print_Results(LCOE, NPC, TotVarCost, TotInvCost):
+def Print_Results(LCOE, NPC, TotVarCost, TotInvCost, SalvageValue):
     
     print('\nProject NPC = '+str(round(NPC,2))+' USD')
     print('Project Total actualized Operation Cost = '+str(round(TotVarCost,2))+' USD')
     print('Project Total Investment Cost = '+str(round(TotInvCost,2))+' USD')
     print('Project LCOE = '+str(round(LCOE,4))+' USD/kWh')
+    print('Project Salvage Value = '+str(round(SalvageValue,2))+' USD')
     

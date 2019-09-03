@@ -22,7 +22,8 @@ def Model_Resolution(model, Renewable_Penetration, Battery_Independency,datapath
     Energy_balance, Maximun_Lost_Load,Scenario_Net_Present_Cost, Scenario_Lost_Load_Cost, Renewable_Energy_Penetration,\
     Investment_Cost, Operation_Maintenance_Cost, Battery_Reposition_Cost, Maximun_Generator_Energy, Total_Fuel_Cost,\
     Battery_Min_Capacity, Battery_Min_Step_Capacity, Renewables_Min_Step_Units, Generator_Min_Step_Capacity, Salvage_Value, Net_Present_Cost_Obj, \
-    Total_Variable_Cost, Scenario_Variable_Cost, Battery_Replacement    
+    Total_Variable_Cost, Scenario_Variable_Cost
+#    , Battery_Replacement    
 
     
     # OBJETIVE FUNTION:
@@ -69,7 +70,7 @@ def Model_Resolution(model, Renewable_Penetration, Battery_Independency,datapath
     model.ScenarioLostLoadCost = Constraint(model.scenarios, rule=Scenario_Lost_Load_Cost)
     model.FuelCostTotal = Constraint(model.scenarios, model.generator_types, rule=Total_Fuel_Cost)
     model.BatteryRepositionCost = Constraint(model.scenarios,rule=Battery_Reposition_Cost) 
-    model.BatteryReplacement = Constraint(model.scenarios,rule=Battery_Replacement)     
+#    model.BatteryReplacement = Constraint(model.scenarios,rule=Battery_Replacement)     
     model.ScenarioVariableCost = Constraint(model.scenarios,rule=Scenario_Variable_Cost)    
     model.TotalVariableCost = Constraint(rule=Total_Variable_Cost)
     

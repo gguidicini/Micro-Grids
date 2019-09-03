@@ -282,38 +282,38 @@ def Total_Variable_Cost(model):
     return model.Total_Variable_Cost == (sum(model.Total_Scenario_Variable_Cost[s]*model.Scenario_Weight[s] for s in model.scenarios))
 
 
-def Battery_Replacement(model,s):
-        
-    Battery_Replacement_Cost = 0    
-    years_list = [i for i in model.years]
-    years_to_remove = []
-    
-    for ut in model.upgrades:
-        Delta_SOC = 0
-        if ut != 1:
-            for (y,u) in model.yu_tup:
-                if u != ut:
-                    years_to_remove += [y]
-        years_list = list(set(years_list).difference(set(years_to_remove)))
-        
-        for yt in years_list:
-            for t in range(1, model.Periods+1):
-
-                if t==1 and yt==1: 
-                    Delta_SOC = 0
-                if t==1 and yt!=1:
-                    if ut ==1:
-                        Delta_SOC += (model.State_Of_Charge_Battery[s,yt,t] - model.State_Of_Charge_Battery[s,yt-1,model.Periods])/model.Battery_Nominal_Capacity[ut]
-                    else:
-                        Delta_SOC += (model.State_Of_Charge_Battery[s,yt,t] - model.State_Of_Charge_Battery[s,yt-1,model.Periods])/(model.Battery_Nominal_Capacity[ut]-model.Battery_Nominal_Capacity[ut-1])
-                if t!=1:  
-                    if ut ==1:
-                        Delta_SOC += (model.State_Of_Charge_Battery[s,yt,t] - model.State_Of_Charge_Battery[s,yt,t-1])/model.Battery_Nominal_Capacity[ut]
-                    else:
-                        Delta_SOC += (model.State_Of_Charge_Battery[s,yt,t] - model.State_Of_Charge_Battery[s,yt,t-1])/(model.Battery_Nominal_Capacity[ut]-model.Battery_Nominal_Capacity[ut-1])    
-                
-                if Delta_SOC >= (model.Battery_Cycles*2*(1-model.Depth_of_Discharge)):    
-                    Battery_Replacement_Cost += model.Battery_Nominal_Capacity[ut] * (model.Battery_Investment_Cost - model.Battery_Electronic_Investment_Cost) / ((1+model.Discount_Rate)**yt)
-                    Delta_SOC = 0
-                    
-    return model.Battery_Replacement_Cost[s] == Battery_Replacement_Cost
+#def Battery_Replacement(model,s):
+#        
+#    Battery_Replacement_Cost = 0    
+#    years_list = [i for i in model.years]
+#    years_to_remove = []
+#    
+#    for ut in model.upgrades:
+#        Delta_SOC = 0
+#        if ut != 1:
+#            for (y,u) in model.yu_tup:
+#                if u != ut:
+#                    years_to_remove += [y]
+#        years_list = list(set(years_list).difference(set(years_to_remove)))
+#        
+#        for yt in years_list:
+#            for t in range(1, model.Periods+1):
+#
+#                if t==1 and yt==1: 
+#                    Delta_SOC = 0
+#                if t==1 and yt!=1:
+#                    if ut ==1:
+#                        Delta_SOC += (model.State_Of_Charge_Battery[s,yt,t] - model.State_Of_Charge_Battery[s,yt-1,model.Periods])/model.Battery_Nominal_Capacity[ut]
+#                    else:
+#                        Delta_SOC += (model.State_Of_Charge_Battery[s,yt,t] - model.State_Of_Charge_Battery[s,yt-1,model.Periods])/(model.Battery_Nominal_Capacity[ut]-model.Battery_Nominal_Capacity[ut-1])
+#                if t!=1:  
+#                    if ut ==1:
+#                        Delta_SOC += (model.State_Of_Charge_Battery[s,yt,t] - model.State_Of_Charge_Battery[s,yt,t-1])/model.Battery_Nominal_Capacity[ut]
+#                    else:
+#                        Delta_SOC += (model.State_Of_Charge_Battery[s,yt,t] - model.State_Of_Charge_Battery[s,yt,t-1])/(model.Battery_Nominal_Capacity[ut]-model.Battery_Nominal_Capacity[ut-1])    
+#                
+#                if Delta_SOC >= (model.Battery_Cycles*2*(1-model.Depth_of_Discharge)):    
+#                    Battery_Replacement_Cost += model.Battery_Nominal_Capacity[ut] * (model.Battery_Investment_Cost - model.Battery_Electronic_Investment_Cost) / ((1+model.Discount_Rate)**yt)
+#                    Delta_SOC = 0
+#                    
+#    return model.Battery_Replacement_Cost[s] == Battery_Replacement_Cost
