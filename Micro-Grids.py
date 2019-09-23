@@ -1,8 +1,8 @@
-"""
-MicroGridsPy - Multi-year capacity-expansion (MYCE) 2018/2019
-Based on the original model by Sergio Balderrama and Sylvain Quoilin
-Authors: Giulia Guidicini, Lorenzo Rinaldi - Politecnico di Milano
-"""
+#####
+#MicroGridsPy MYCE 2018/2019
+#Based on the original model by Sergio Balderrama and Sylvain Quoilin
+#Multi-Year Capacity-Expansion model managed by Giulia Guidicini and Lorenzo Rinaldi
+######
 
 
 ############### MULTI-YEAR CAPACITY-EXPANSION MODEL ###########################
@@ -23,7 +23,7 @@ if Multi_Year == 'Yes':
     from Model_Resolution_MY import Model_Resolution
    
         
-#    Optimization_Goal = 'NPC'  # Options: NPC / Operation cost 
+    Optimization_Goal = 'NPC'  # Options: NPC / Operation cost 
     
     Renewable_Penetration = 0  # a number from 0 to 1.
     Battery_Independency = 0   # number of days of battery independence
@@ -31,12 +31,12 @@ if Multi_Year == 'Yes':
     model = AbstractModel() # define type of optimization problem
     
     # Optimization model    
-    Model_Creation(model, Renewable_Penetration, Battery_Independency) # Creation of the Sets, parameters and variables.
-    instance = Model_Resolution(model, Renewable_Penetration,
+    Model_Creation(model,Optimization_Goal, Renewable_Penetration, Battery_Independency) # Creation of the Sets, parameters and variables.
+    instance = Model_Resolution(model, Optimization_Goal, Renewable_Penetration,
                                 Battery_Independency) # Resolution of the instance
     
-    # Upload the results from the instance and saving it in excel files
-    Data = Load_Results(instance) # Extract the results of energy from the instance and save it in a excel file 
+    ## Upload the results from the instance and saving it in excel files
+    Data = Load_Results(instance, Optimization_Goal) # Extract the results of energy from the instance and save it in a excel file 
     NPC = Data[0]
     Scenarios =  Data[2]
     Scenario_Probability = Data[4]
@@ -58,7 +58,7 @@ if Multi_Year == 'Yes':
 
     # Data Analisys    
     Energy_Mix_S = Energy_Mix(instance,Scenarios,Scenario_Probability)
-    Print_Results(LCOE, NPC, TotVarCost, TotInvCost)  
+    Print_Results(LCOE, NPC, TotVarCost, TotInvCost, Optimization_Goal)  
 
     
 ################################################################################################    

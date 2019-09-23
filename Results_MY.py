@@ -1,7 +1,13 @@
+#####
+#MicroGridsPy MYCE 2018/2019
+#Based on the original model by Sergio Balderrama and Sylvain Quoilin
+#Multi-Year Capacity-Expansion model managed by Giulia Guidicini and Lorenzo Rinaldi
+######
+
 """
-MicroGridsPy - Multi-year capacity-expansion (MYCE) 2018/2019
-Based on the original model by Sergio Balderrama and Sylvain Quoilin
-Authors: Giulia Guidicini, Lorenzo Rinaldi - Politecnico di Milano
+Created on Thu Dec  6 10:32:09 2018
+
+@author: GG_LR
 """
 
 import pandas as pd
@@ -10,7 +16,7 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 from pandas import ExcelWriter
 
-def Load_Results(instance):
+def Load_Results(instance, Optimization_Goal):
     
     from win32com.client import Dispatch
     import os
@@ -59,6 +65,7 @@ def Load_Results(instance):
     LHV = (instance.Lower_Heating_Value.extract_values())
     Gen_Eff = (instance.Generator_Efficiency.extract_values())
 
+    print('\nObjective Function = '+str(Optimization_Goal))
     print('Number of scenarios = '+str(Number_Scenarios))
     print('Number of years = '+str(Number_Years)+'\n')
 
@@ -234,7 +241,7 @@ def Load_Results(instance):
     Generator_Nominal_Capacity = instance.Generator_Nominal_Capacity.get_values()
     Generator_Operation_Maintenance_Cost = instance.Generator_Operation_Maintenance_Cost.extract_values()
     Marginal_Cost_Gen = instance.Generator_Marginal_Cost.extract_values()
-    FCT = instance.Total_Fuel_Cost.extract_values()
+    FCT_Act = instance.Total_Fuel_Cost_Act.extract_values()
     
     Gen_data = ExcelWriter('Results/Multi_Year/Generator_Data.xlsx')
     
@@ -260,7 +267,7 @@ def Load_Results(instance):
         for u in range(1, Number_Upgrades +1):        
             Generator_Data.loc['Yearly O&M Cost at upgrade ' + str(u), Name] = Generator_Investment_Cost[g]*Generator_Nominal_Capacity[u,g]*Generator_Data.loc['O&M Cost [%]', Name]
                
-        Generator_Data.loc['Total actualized Fuel Cost', Name] = sum(FCT[(s,g)]*Scenario_Weight[s] for s in range(1, Number_Scenarios+1))
+        Generator_Data.loc['Total actualized Fuel Cost', Name] = sum(FCT_Act[(s,g)]*Scenario_Weight[s] for s in range(1, Number_Scenarios+1))
                 
     Generator_Data.to_excel(Gen_data, sheet_name = 'Generator Data')      
 
@@ -293,7 +300,7 @@ def Load_Results(instance):
     PriceBattery= instance.Battery_Investment_Cost.value
     Unitary_Battery_Reposition_Cost = instance.Unitary_Battery_Reposition_Cost.value
     OM_Bat = instance.Battery_Operation_Maintenance_Cost.value
-    BRC = instance.Battery_Reposition_Cost.get_values()
+    BRC_Act = instance.Battery_Reposition_Cost_Act.get_values()
 
     Bat_data = ExcelWriter('Results/Multi_Year/Battery_Data.xlsx')
     
@@ -314,7 +321,7 @@ def Load_Results(instance):
     for u in range(1, Number_Upgrades +1):
         Battery_Data.loc['Yearly O&M Cost at upgrade '+str(u),0] = Battery_Nominal_Capacity[u]*PriceBattery*OM_Bat
         
-    Battery_Data.loc['Total actualized Battery Reposition Cost', 0] = sum(BRC[(s)]*Scenario_Weight[s] for s in range(1, Number_Scenarios+1))
+    Battery_Data.loc['Total actualized Battery Reposition Cost', 0] = sum(BRC_Act[(s)]*Scenario_Weight[s] for s in range(1, Number_Scenarios+1))
     
     Battery_Data.to_excel(Bat_data, sheet_name = 'Battery_Data') # Creating an excel file with the values of the variables that does not depend of the periods
     
@@ -345,9 +352,13 @@ def Load_Results(instance):
 
 #################################### PROJECT INFORMATION ####################################
 
-    NPC = instance.ObjectiveFuntion.expr()
+    if Optimization_Goal == 'NPC': 
+        NPC = instance.ObjectiveFuntion.expr()
+    elif Optimization_Goal == 'Operation cost':
+        TotVarCostNonAct = instance.ObjectiveFunction.expr()
+        NPC = instance.Net_Present_Cost.value
     
-    TotVarCost = instance.Total_Variable_Cost.value
+    TotVarCostAct = instance.Total_Variable_Cost_Act.value
     TotInvCost = instance.Investment_Cost.value
     VOLL = instance.Value_Of_Lost_Load.value
     Renewable_Units = instance.Renewable_Units.get_values()
@@ -357,8 +368,10 @@ def Load_Results(instance):
     Project_Info_1 = pd.DataFrame()
 
     Project_Info_1.loc['NPC', 0] = NPC
+    if Optimization_Goal == 'Operation cost':
+        Project_Info_1.loc['Total non actualized Operation cost', 0] = TotVarCostNonAct
     
-    Project_Info_1.loc['Total actualized Operation cost', 0] = TotVarCost
+    Project_Info_1.loc['Total actualized Operation cost', 0] = TotVarCostAct
         
 
     Demand = pd.DataFrame()
@@ -374,6 +387,8 @@ def Load_Results(instance):
         Weighted_Present_Demand = Scenario_Weight[s]*Present_Demand   
         NP_Demand += Weighted_Present_Demand
    
+#    LCOE_OyM = (NPC - TotInvCost)/NP_Demand*1000
+#    print(LCOE_OyM)
     LCOE = NPC/NP_Demand*1000
     Project_Info_1.loc['LCOE', 0] = LCOE
 
@@ -467,7 +482,10 @@ def Load_Results(instance):
     Data.append(Scenario_Weight)
     Data.append(LCOE)
     Data.append(Data_Renewable)
-    Data.append(TotVarCost)
+    if Optimization_Goal == 'NPC':
+        Data.append(TotVarCostAct)
+    elif Optimization_Goal == 'Operation cost':
+        Data.append(TotVarCostNonAct)
     Data.append(TotInvCost)
     
     print('Results: Loadresults1 executed properly')
@@ -808,10 +826,13 @@ def Energy_Mix(instance,Scenarios,Scenario_Probability):
     return Energy_Mix    
     
     
-def Print_Results(LCOE, NPC, TotVarCost, TotInvCost):
+def Print_Results(LCOE, NPC, TotVarCost, TotInvCost, Optimization_Goal):
     
     print('\nProject NPC = '+str(round(NPC,2))+' USD')
-    print('Project Total actualized Operation Cost = '+str(round(TotVarCost,2))+' USD')
+    if Optimization_Goal == 'NPC':
+        print('Project Total actualized Operation Cost = '+str(round(TotVarCost,2))+' USD')
+    elif Optimization_Goal == 'Operation cost':
+        print('Project Total non-actualized Operation Cost = '+str(round(TotVarCost,2))+' USD')
     print('Project Total Investment Cost = '+str(round(TotInvCost,2))+' USD')
     print('Project LCOE = '+str(round(LCOE,4))+' USD/kWh')
     
